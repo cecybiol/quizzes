@@ -2,30 +2,819 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Test · IRCI</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<title>TEST DE REPASO — PLACA MADRE / RAM / MANTENIMIENTO</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap');
+
+:root{
+  --bg: #060a06;
+  --scanline: rgba(0,0,0,0.15);
+  --amber: #ffb000;
+  --amber-dim: #a56f00;
+  --green: #33ff66;
+  --green-dim: #1a8038;
+  --red: #ff4433;
+  --cyan: #4fd7ff;
+  --panel: #0a120a;
+  --border: #2b3d2b;
+}
+
+*{box-sizing:border-box;}
+
+body{
+  background: var(--bg);
+  color: var(--green);
+  font-family: 'Share Tech Mono', monospace;
+  margin:0;
+  padding: 24px 14px 60px;
+  min-height:100vh;
+  position:relative;
+  overflow-x:hidden;
+}
+
+body::before{
+  content:"";
+  position:fixed; inset:0; pointer-events:none;
+  background: repeating-linear-gradient(to bottom, transparent 0px, transparent 2px, var(--scanline) 3px, transparent 4px);
+  z-index:5; mix-blend-mode: multiply;
+}
+body::after{
+  content:""; position:fixed; inset:0; pointer-events:none;
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.55) 100%);
+  z-index:4;
+}
+
+.crt{ max-width: 760px; margin: 0 auto; position:relative; z-index:1; }
+
+.topbar{
+  border: 1px solid var(--border); background: var(--panel); padding: 8px 14px;
+  font-size: 12px; color: var(--amber-dim); display:flex; justify-content:space-between;
+  letter-spacing: 1px; margin-bottom: 14px;
+}
+
+.bios-title{
+  font-family: 'VT323', monospace; font-size: 46px; line-height:1.05; color: var(--amber);
+  text-shadow: 0 0 6px rgba(255,176,0,0.5); margin: 6px 0 2px; letter-spacing: 1px;
+}
+.bios-sub{ color: var(--green-dim); font-size: 13px; margin-bottom: 18px; border-bottom: 1px dashed var(--border); padding-bottom: 12px; }
+.bios-sub span{ color: var(--cyan); }
+
+.post-log{ font-size: 12px; color: var(--green-dim); margin-bottom: 18px; line-height:1.6; min-height: 20px; }
+.post-log .ok{ color: var(--green); }
+
+.roadmap{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom: 18px; }
+.roadmap-step{
+  flex:1; min-width: 80px; border: 1px solid var(--border); background: var(--panel);
+  padding: 6px 8px; font-size: 10px; text-align:center; color: var(--green-dim); letter-spacing: 0.5px;
+}
+.roadmap-step.done{ border-color: var(--green); color: var(--green); }
+.roadmap-step.active{ border-color: var(--cyan); color: var(--cyan); }
+
+.section-banner{ display:none; }
+.section-banner.active{
+  display:block; border: 1px solid var(--border); background: var(--panel);
+  padding: 26px 20px; text-align:center; animation: flicker 1.2s ease-in-out;
+}
+.section-banner .code{ color: var(--amber-dim); font-size: 12px; margin-bottom: 10px; letter-spacing: 2px; }
+.section-banner h2{
+  font-family:'VT323', monospace; color: var(--cyan); font-size: 32px; margin: 0 0 14px;
+  text-shadow: 0 0 6px rgba(79,215,255,0.5);
+}
+.section-banner p{ color: var(--green); font-size: 14px; max-width: 520px; margin: 0 auto 20px; line-height:1.6; }
+
+.card{ display:none; border: 1px solid var(--border); background: var(--panel); padding: 20px; }
+.card.active{ display:block; animation: flicker 0.5s ease-in-out; }
+
+.card-head{
+  display:flex; justify-content:space-between; align-items:baseline; font-size: 11px;
+  color: var(--amber-dim); letter-spacing:1px; margin-bottom: 14px;
+  border-bottom: 1px dashed var(--border); padding-bottom: 8px;
+}
+
+.progress-track{ height: 6px; background: #0f1a0f; border: 1px solid var(--border); margin-bottom: 18px; overflow:hidden; }
+.progress-fill{ height:100%; background: linear-gradient(to right, var(--green-dim), var(--green)); width:0%; transition: width .35s ease; }
+
+.diagram-wrap{
+  border: 1px dashed var(--border);
+  background: #050805;
+  padding: 10px;
+  margin-bottom: 16px;
+  display:none;
+}
+.diagram-wrap.show{ display:block; }
+.diagram-wrap svg{ width:100%; height:auto; display:block; }
+.diagram-caption{ font-size: 10px; color: var(--green-dim); text-align:center; margin-top:6px; letter-spacing:1px; }
+
+.question{ font-size: 17px; color: var(--amber); margin-bottom: 18px; line-height:1.5; white-space: pre-line; }
+.question::before{ content:"> "; color: var(--cyan); }
+
+.options{ display:flex; flex-direction:column; gap:10px; margin-bottom: 8px; }
+
+.opt{
+  text-align:left; background: transparent; border: 1px solid var(--border); color: var(--green);
+  font-family:'Share Tech Mono', monospace; font-size: 14.5px; padding: 12px 14px; cursor:pointer;
+  transition: all .15s ease; position:relative;
+}
+.opt:hover:not(:disabled){ border-color: var(--cyan); color: var(--cyan); background: rgba(79,215,255,0.06); }
+.opt::before{ content: attr(data-letter); color: var(--amber-dim); margin-right: 10px; }
+.opt:hover:not(:disabled)::before{ color: var(--cyan); }
+.opt:disabled{ cursor:default; }
+.opt.correct{ border-color: var(--green); background: rgba(51,255,102,0.1); color: var(--green); }
+.opt.wrong{ border-color: var(--red); background: rgba(255,68,51,0.1); color: var(--red); }
+.opt.reveal{ border-color: var(--green); color: var(--green-dim); }
+
+.feedback{
+  display:none; margin-top: 16px; padding: 12px 14px; border-left: 3px solid var(--cyan);
+  background: rgba(79,215,255,0.05); font-size: 13px; line-height:1.6; color: #cfe;
+}
+.feedback.show{ display:block; }
+.feedback .tag{ font-weight:bold; letter-spacing:1px; display:block; margin-bottom: 6px; }
+.feedback.ok .tag{ color: var(--green); }
+.feedback.bad .tag{ color: var(--red); }
+
+.nav-row{ display:flex; justify-content:flex-end; margin-top: 18px; gap:10px; }
+
+.btn{
+  background: transparent; border: 1px solid var(--amber-dim); color: var(--amber);
+  font-family:'Share Tech Mono', monospace; font-size: 13px; padding: 10px 18px; cursor:pointer; letter-spacing: 1px;
+}
+.btn:hover{ background: rgba(255,176,0,0.1); border-color: var(--amber); }
+.btn:disabled{ opacity:0.35; cursor:default; }
+.btn.primary{ border-color: var(--cyan); color: var(--cyan); }
+.btn.primary:hover{ background: rgba(79,215,255,0.1); }
+.btn.ghost{ border-color: var(--green-dim); color: var(--green-dim); font-size:12px; padding:8px 12px; }
+.btn.ghost:hover{ border-color: var(--green); color: var(--green); }
+
+.points-tag{
+  display:inline-block; border: 1px solid var(--amber-dim); color: var(--amber);
+  font-size: 11px; padding: 2px 8px; margin-bottom: 10px; letter-spacing: 1px;
+}
+.data-block{
+  background: #050805; border: 1px dashed var(--border); color: var(--cyan);
+  font-size: 12.5px; padding: 12px 14px; margin: 10px 0 16px; white-space: pre-wrap;
+  line-height: 1.6; overflow-x:auto;
+}
+textarea.answer-box{
+  width:100%; min-height: 110px; background: #050805; border: 1px solid var(--border); color: var(--green);
+  font-family:'Share Tech Mono', monospace; font-size: 13.5px; padding: 12px; resize: vertical; margin-bottom: 14px;
+}
+textarea.answer-box:focus{ outline:none; border-color: var(--cyan); }
+textarea.answer-box::placeholder{ color: var(--green-dim); }
+
+.model-answer{
+  display:none; border-left: 3px solid var(--green); background: rgba(51,255,102,0.06);
+  padding: 12px 14px; font-size: 13px; line-height: 1.7; color: #cfe; margin-bottom: 16px;
+}
+.model-answer.show{ display:block; }
+.model-answer .tag{ color: var(--green); font-weight:bold; letter-spacing:1px; display:block; margin-bottom: 8px; }
+.model-answer ul{ margin: 6px 0; padding-left: 18px; }
+.model-answer li{ margin-bottom: 6px; }
+
+.selfscore-row{ display:none; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom: 6px; }
+.selfscore-row.show{ display:flex; }
+.selfscore-label{ font-size: 12px; color: var(--amber-dim); letter-spacing:1px; }
+.score-opt{
+  border: 1px solid var(--border); background: transparent; color: var(--green);
+  font-family:'Share Tech Mono', monospace; font-size: 12px; padding: 6px 12px; cursor:pointer;
+}
+.score-opt:hover{ border-color: var(--cyan); color: var(--cyan); }
+.score-opt.picked{ border-color: var(--green); color: var(--green); background: rgba(51,255,102,0.1); }
+
+.results{ display:none; border: 1px solid var(--border); background: var(--panel); padding: 26px 20px; }
+.results.active{ display:block; animation: flicker 1s ease-in-out; }
+.results h2{ font-family:'VT323', monospace; font-size: 30px; color: var(--amber); margin: 0 0 4px; }
+.score-big{ font-family:'VT323', monospace; font-size: 56px; color: var(--cyan); text-shadow: 0 0 10px rgba(79,215,255,0.6); margin: 10px 0 0; }
+.score-sub{ font-size: 11px; color: var(--green-dim); letter-spacing: 1px; margin-bottom: 14px; }
+.breakdown{ margin: 18px 0; font-size: 13px; }
+.breakdown-row{ display:flex; justify-content:space-between; border-bottom: 1px dashed var(--border); padding: 8px 0; }
+.breakdown-row.total{ color: var(--amber); border-bottom: 1px solid var(--border); font-weight:bold; }
+.status-line{ font-size: 13px; color: var(--green-dim); margin: 14px 0 22px; line-height:1.7; }
+.status-line .good{ color: var(--green); }
+.status-line .warn{ color: var(--amber); }
+.status-line .bad{ color: var(--red); }
+
+.footer-note{ text-align:center; font-size: 11px; color: var(--border); margin-top: 24px; letter-spacing:1px; }
+
+@keyframes flicker{ 0%{ opacity: 0.3; } 8%{ opacity: 0.9; } 10%{ opacity: 0.4; } 20%{ opacity: 1; } 100%{ opacity: 1; } }
+
+@media (max-width: 480px){
+  .bios-title{ font-size: 36px; }
+  .card, .section-banner, .results{ padding: 16px; }
+  .roadmap-step{ min-width: 60px; font-size: 9px; }
+}
+</style>
 </head>
 <body>
-<div class="wrap">
-  <header class="top">
-    <div>
-      <p class="eyebrow">Acceso concedido</p>
-      <h1>Test · IRCI</h1>
-      <p class="sub">Esta es una página de ejemplo. Sustituye este contenido por tu test real de IRCI.</p>
+<div class="crt">
+  <div class="topbar">
+    <span>INET · TÉCNICATURA EN INFORMÁTICA</span>
+    <span>6TO AÑO</span>
+  </div>
+
+  <div class="bios-title">TEST DE REPASO v3.0</div>
+  <div class="bios-sub">
+    Instalación y Reemplazo de Componentes Internos — <span>Placa Madre · Memoria RAM · Mantenimiento de CPU y RAM</span>
+  </div>
+
+  <div class="post-log" id="postLog"></div>
+  <div class="roadmap" id="roadmap"></div>
+
+  <!-- Section banners -->
+  <div class="section-banner" id="banner-0">
+    <div class="code">UNIDAD 04 · MEM-TEST BLOCK A</div>
+    <h2>PLACA MADRE: CONCEPTOS Y COMPATIBILIDAD</h2>
+    <p>8 preguntas sobre funciones, componentes, factores de forma y compatibilidad con especificaciones reales.</p>
+    <button class="btn primary" onclick="startMC(0)">▶ INICIAR BLOQUE A</button>
+  </div>
+
+  <div class="section-banner" id="banner-1">
+    <div class="code">UNIDAD 04 · MEM-TEST BLOCK B</div>
+    <h2>IDENTIFICACIÓN DE COMPONENTES</h2>
+    <p>8 preguntas sobre un diagrama esquemático de placa madre: identificá cada parte señalada.</p>
+    <button class="btn primary" onclick="startMC(1)">▶ INICIAR BLOQUE B</button>
+  </div>
+
+  <div class="section-banner" id="banner-2">
+    <div class="code">UNIDAD 05 · MEM-TEST BLOCK C</div>
+    <h2>MEMORIA RAM: RENDIMIENTO Y COMPATIBILIDAD</h2>
+    <p>8 preguntas con especificaciones técnicas reales de RAM, CPU y placas madre.</p>
+    <button class="btn primary" onclick="startMC(2)">▶ INICIAR BLOQUE C</button>
+  </div>
+
+  <div class="section-banner" id="banner-3">
+    <div class="code">UNIDAD 06 · MEM-TEST BLOCK D</div>
+    <h2>MANTENIMIENTO DE CPU Y RAM</h2>
+    <p>6 preguntas sobre ESD, diagnóstico de fallas y soluciones.</p>
+    <button class="btn primary" onclick="startMC(3)">▶ INICIAR BLOQUE D</button>
+  </div>
+
+  <div class="section-banner" id="banner-open">
+    <div class="code">EVALUACIÓN ABIERTA · MEM-TEST BLOCK E</div>
+    <h2>ANÁLISIS DE PARÁMETROS Y COMPATIBILIDAD</h2>
+    <p>5 preguntas de desarrollo (10 puntos totales). Escribí tu respuesta, luego revelá la respuesta modelo y autoevaluate.</p>
+    <button class="btn primary" onclick="startOpen()">▶ INICIAR BLOQUE E</button>
+  </div>
+
+  <!-- MC Question card -->
+  <div class="card" id="card">
+    <div class="card-head">
+      <span id="cardBlock">BLOQUE A</span>
+      <span id="cardCounter">Q01/08</span>
     </div>
-    <nav class="top-nav">
-      <a href="index.html">← Volver a los accesos</a>
-    </nav>
-  </header>
-  <main>
-    <p style="font-family: var(--font-mono); color: var(--mist); font-size: 0.9rem;">
-      // TODO: sustituir este bloque por el test de IRCI
-    </p>
-  </main>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="diagram-wrap" id="diagramWrap">
+      <div id="diagramContainer"></div>
+      <div class="diagram-caption">DIAGRAMA ESQUEMÁTICO · NO A ESCALA</div>
+    </div>
+    <div class="question" id="questionText"></div>
+    <div class="options" id="optionsList"></div>
+    <div class="feedback" id="feedback">
+      <span class="tag" id="feedbackTag"></span>
+      <span id="feedbackText"></span>
+    </div>
+    <div class="nav-row">
+      <button class="btn primary" id="nextBtn" disabled onclick="nextQuestion()">SIGUIENTE →</button>
+    </div>
+  </div>
+
+  <!-- Open / development question card -->
+  <div class="card" id="openCard">
+    <div class="card-head">
+      <span id="openBlock">BLOQUE E · DESARROLLO</span>
+      <span id="openCounter">P1/05</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="openProgressFill"></div></div>
+    <span class="points-tag" id="openPoints">2 PTS</span>
+    <div class="question" id="openQuestionText"></div>
+    <div class="data-block" id="openDataBlock" style="display:none;"></div>
+    <textarea class="answer-box" id="openAnswerBox" placeholder="Escribí tu respuesta acá antes de ver el modelo (opcional, no se guarda)..."></textarea>
+    <div class="nav-row" style="justify-content:flex-start; margin-top:0; margin-bottom:6px;">
+      <button class="btn ghost" id="revealBtn" onclick="revealModelAnswer()">👁 VER RESPUESTA MODELO</button>
+    </div>
+    <div class="model-answer" id="modelAnswer">
+      <span class="tag">RESPUESTA MODELO</span>
+      <div id="modelAnswerBody"></div>
+    </div>
+    <div class="selfscore-row" id="selfscoreRow">
+      <span class="selfscore-label">AUTOEVALUACIÓN →</span>
+      <div id="selfscoreOptions"></div>
+    </div>
+    <div class="nav-row">
+      <button class="btn primary" id="openNextBtn" disabled onclick="nextOpenQuestion()">SIGUIENTE →</button>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="results" id="results">
+    <div class="code" style="color:var(--amber-dim); font-size:12px; letter-spacing:2px;">DIAGNÓSTICO FINAL</div>
+    <h2>RESULTADO DEL TEST</h2>
+    <div class="score-big" id="scoreBig">0/36</div>
+    <div class="score-sub">SELECCIÓN MÚLTIPLE + AUTOEVALUACIÓN DE DESARROLLO</div>
+    <div class="status-line" id="statusLine"></div>
+    <div class="breakdown" id="breakdown"></div>
+    <button class="btn primary" onclick="restartAll()">↺ REINICIAR TEST</button>
+  </div>
+
+  <div class="footer-note">SYSTEM READY · PRESS ANY OPTION TO CONTINUE · NO REAL HARDWARE WAS HARMED</div>
 </div>
+
+<script>
+/* ============ SHARED MOTHERBOARD DIAGRAM (Bloque B) ============ */
+const mbDiagram = `
+<svg viewBox="0 0 700 480" xmlns="http://www.w3.org/2000/svg" font-family="Share Tech Mono, monospace">
+  <rect x="15" y="15" width="670" height="450" fill="#08140c" stroke="#2b3d2b" stroke-width="2"/>
+  <!-- traces -->
+  <g stroke="#1a8038" stroke-width="1" opacity="0.5">
+    <path d="M60,440 L60,120 L260,120" fill="none"/>
+    <path d="M100,440 L100,180 L260,180" fill="none"/>
+    <path d="M140,440 L140,240 L260,240" fill="none"/>
+    <path d="M400,60 L400,400" fill="none"/>
+    <path d="M440,60 L440,400" fill="none"/>
+  </g>
+
+  <!-- CPU Socket (1) -->
+  <rect x="255" y="70" width="130" height="130" fill="#123322" stroke="#ffb000" stroke-width="2"/>
+  <circle cx="320" cy="135" r="16" fill="#0a120a" stroke="#ffb000" stroke-width="2"/>
+  <text x="320" y="141" fill="#ffb000" font-size="16" text-anchor="middle">1</text>
+
+  <!-- VRM heatsinks (7) -->
+  <rect x="200" y="60" width="45" height="150" fill="#1a2a1a" stroke="#4fd7ff" stroke-width="1.5"/>
+  <rect x="395" y="60" width="45" height="150" fill="#1a2a1a" stroke="#4fd7ff" stroke-width="1.5"/>
+  <circle cx="222" cy="45" r="14" fill="#0a120a" stroke="#4fd7ff" stroke-width="2"/>
+  <text x="222" y="50" fill="#4fd7ff" font-size="14" text-anchor="middle">7</text>
+
+  <!-- DIMM slots (2) -->
+  <g fill="#c9a227" stroke="#8a6d1a">
+    <rect x="470" y="60" width="18" height="230"/>
+    <rect x="498" y="60" width="18" height="230"/>
+    <rect x="526" y="60" width="18" height="230"/>
+    <rect x="554" y="60" width="18" height="230"/>
+  </g>
+  <circle cx="520" cy="45" r="14" fill="#0a120a" stroke="#ffb000" stroke-width="2"/>
+  <text x="520" y="50" fill="#ffb000" font-size="14" text-anchor="middle">2</text>
+
+  <!-- 24-pin ATX connector (6) -->
+  <rect x="605" y="60" width="35" height="140" fill="#33ff66" opacity="0.25" stroke="#33ff66" stroke-width="1.5"/>
+  <circle cx="622" cy="215" r="14" fill="#0a120a" stroke="#33ff66" stroke-width="2"/>
+  <text x="622" y="220" fill="#33ff66" font-size="14" text-anchor="middle">6</text>
+
+  <!-- Chipset (4) -->
+  <rect x="380" y="330" width="60" height="60" fill="#123322" stroke="#4fd7ff" stroke-width="2"/>
+  <circle cx="410" cy="360" r="14" fill="#0a120a" stroke="#4fd7ff" stroke-width="2"/>
+  <text x="410" y="365" fill="#4fd7ff" font-size="14" text-anchor="middle">4</text>
+
+  <!-- PCIe x16 slot (3) -->
+  <rect x="230" y="420" width="280" height="22" fill="#c9a227" opacity="0.5" stroke="#ffb000" stroke-width="1.5"/>
+  <circle cx="500" cy="405" r="14" fill="#0a120a" stroke="#ffb000" stroke-width="2"/>
+  <text x="500" y="410" fill="#ffb000" font-size="14" text-anchor="middle">3</text>
+
+  <!-- SATA ports (5) -->
+  <g fill="#4fd7ff" opacity="0.4" stroke="#4fd7ff">
+    <rect x="580" y="330" width="14" height="20"/>
+    <rect x="580" y="355" width="14" height="20"/>
+    <rect x="580" y="380" width="14" height="20"/>
+    <rect x="580" y="405" width="14" height="20"/>
+  </g>
+  <circle cx="630" cy="365" r="14" fill="#0a120a" stroke="#4fd7ff" stroke-width="2"/>
+  <text x="630" y="370" fill="#4fd7ff" font-size="14" text-anchor="middle">5</text>
+
+  <!-- M.2 slot (8) -->
+  <rect x="60" y="330" width="110" height="16" fill="#33ff66" opacity="0.35" stroke="#33ff66" stroke-width="1.5"/>
+  <circle cx="60" cy="360" r="14" fill="#0a120a" stroke="#33ff66" stroke-width="2"/>
+  <text x="60" y="365" fill="#33ff66" font-size="14" text-anchor="middle">8</text>
+
+  <text x="350" y="465" fill="#1a8038" font-size="11" text-anchor="middle">PLACA MADRE — VISTA ESQUEMÁTICA</text>
+</svg>`;
+
+/* ============ MULTIPLE CHOICE BLOCKS (A-D) ============ */
+const sections = [
+  {
+    name: "BLOQUE A · PLACA MADRE",
+    label: "Bloque A · Placa madre",
+    questions: [
+      { q:"¿Cuál es la función principal de la placa madre?",
+        opts:["Almacenar archivos de forma permanente","Conectar todos los componentes del sistema, gestionando comunicación y alimentación","Regular únicamente la temperatura del gabinete","Ejecutar instrucciones de programas como el CPU"],
+        correct:1, exp:"La placa madre es el circuito impreso principal: interconecta todos los componentes y gestiona tanto la comunicación entre ellos como su alimentación eléctrica." },
+      { q:"¿Qué componente de la placa madre regula el voltaje que llega al CPU?",
+        opts:["El chipset","La VRM (Voltage Regulator Module)","El BIOS/UEFI","El panel I/O trasero"],
+        correct:1, exp:"La VRM (Voltage Regulator Module) regula el voltaje entregado al procesador. Más fases VRM suelen indicar mejor estabilidad, sobre todo en overclocking." },
+      { q:"¿Cuál de estos factores de forma es el estándar más común y de mayor tamaño para una PC de escritorio de uso general?",
+        opts:["Mini-ITX","ATX","Los tres son igual de comunes","Nano-ITX"],
+        correct:1, exp:"ATX es el factor de forma estándar más común para PC de escritorio, con más slots de expansión disponibles. Micro-ATX y Mini-ITX son alternativas más compactas para gabinetes pequeños." },
+      { q:"¿Qué elemento de la placa madre determina qué procesadores son compatibles con ella?",
+        opts:["El chipset","La memoria caché del CPU","El conector de audio frontal","El conector Molex"],
+        correct:0, exp:"El chipset gestiona la comunicación entre CPU y otros componentes, y determina qué procesadores son soportados, capacidades de overclocking y tecnologías disponibles." },
+      { q:"¿Qué conector alimenta principalmente a la placa madre?",
+        opts:["EPS 8 pines","Molex 4 pines","ATX 24 pines","SATA power 15 pines"],
+        correct:2, exp:"El conector ATX de 24 pines entrega la alimentación principal a la placa madre. El EPS de 8 pines, en cambio, alimenta específicamente al CPU." },
+      { q:"¿Qué elemento mantiene la configuración de la BIOS/UEFI y el reloj del sistema aún con el equipo apagado?",
+        opts:["La VRM","El CMOS y su batería","El slot M.2","El panel I/O trasero"],
+        correct:1, exp:"El CMOS junto con su batería mantiene guardada la configuración de la BIOS/UEFI y el reloj del sistema incluso cuando el equipo está desconectado de la corriente." },
+      { q:"Un Intel Core i5-13400F usa socket LGA1700 y es compatible con los chipsets Z790, B760, H770 y H610. ¿Sería compatible con una placa madre con socket AM5?",
+        opts:["Sí, siempre que el chipset lo permita","No, porque AM5 es un socket para procesadores AMD Ryzen y el CPU es Intel con socket LGA1700","Sí, usando un adaptador de socket","Depende únicamente de la marca de la placa"],
+        correct:1, exp:"El socket es una compatibilidad física obligatoria: LGA1700 (Intel) y AM5 (AMD) no son intercambiables, sin importar el chipset o la marca de la placa." },
+      { q:"¿Qué se debe verificar en la placa madre antes de instalar una fuente de alimentación (PSU) nueva?",
+        opts:["Que el factor de forma y los conectores de alimentación sean compatibles","Que la PSU tenga el mismo color que el gabinete","Que la RAM instalada sea DDR5","Que el chipset sea de última generación"],
+        correct:0, exp:"Para instalar una PSU hay que verificar que su factor de forma entre en el gabinete y que sus conectores (ATX 24 pines, EPS, PCIe) sean compatibles con los que requiere la placa madre y sus componentes." }
+    ]
+  },
+  {
+    name: "BLOQUE B · IDENTIFICACIÓN",
+    label: "Bloque B · Identificación de componentes",
+    questions: [
+      { q:"En el diagrama, ¿qué componente corresponde al número 1?",
+        diagram:true,
+        opts:["Chipset","Socket del procesador (CPU)","Slot PCIe x16","Conector SATA"],
+        correct:1, exp:"El número 1 señala el socket del procesador, donde se instala físicamente la CPU sobre la placa madre." },
+      { q:"En el diagrama, ¿qué componente corresponde al número 2?",
+        diagram:true,
+        opts:["Slots DIMM (memoria RAM)","Slot M.2","Disipadores VRM","Conector ATX 24 pines"],
+        correct:0, exp:"El número 2 señala los slots DIMM, donde se insertan los módulos de memoria RAM." },
+      { q:"En el diagrama, ¿qué componente corresponde al número 3?",
+        diagram:true,
+        opts:["Puertos SATA","Slot PCIe x16 (para tarjeta gráfica)","Socket del procesador","Chipset"],
+        correct:1, exp:"El número 3 señala el slot PCIe x16, el más usado para instalar la tarjeta gráfica (GPU)." },
+      { q:"En el diagrama, ¿qué componente corresponde al número 4?",
+        diagram:true,
+        opts:["Chipset","Slots DIMM","VRM","Slot M.2"],
+        correct:0, exp:"El número 4 señala el chipset, que gestiona las comunicaciones entre el CPU y el resto de los componentes." },
+      { q:"En el diagrama, ¿qué componente corresponde al número 5?",
+        diagram:true,
+        opts:["Conectores/puertos SATA","Conector ATX 24 pines","Slot PCIe x1","Socket del procesador"],
+        correct:0, exp:"El número 5 señala los puertos SATA, usados para conectar discos HDD/SSD y unidades ópticas." },
+      { q:"En el diagrama, ¿qué componente corresponde al número 6?",
+        diagram:true,
+        opts:["Conector ATX 24 pines","Conector EPS 8 pines","Slot M.2","Chipset"],
+        correct:0, exp:"El número 6 señala el conector ATX de 24 pines, que entrega la alimentación principal a la placa madre." },
+      { q:"En el diagrama, ¿qué componente corresponde al número 7?",
+        diagram:true,
+        opts:["Disipadores de la VRM, junto al socket del procesador","Puertos SATA","Slots DIMM","Slot PCIe x16"],
+        correct:0, exp:"El número 7 señala los disipadores de la VRM, ubicados junto al socket del CPU para ayudar a disipar el calor generado al regular el voltaje." },
+      { q:"En el diagrama, ¿qué componente corresponde al número 8?",
+        diagram:true,
+        opts:["Slot M.2 (para SSD NVMe o WiFi)","Conector de audio frontal","Slot PCIe x16","Conector ATX 24 pines"],
+        correct:0, exp:"El número 8 señala un slot M.2, usado para instalar SSDs NVMe de alta velocidad o módulos WiFi." }
+    ]
+  },
+  {
+    name: "BLOQUE C · MEMORIA RAM",
+    label: "Bloque C · Memoria RAM",
+    questions: [
+      { q:"La placa ASUS TUF Gaming B760M-PLUS WIFI D4 tiene: 4x DIMM DDR4, hasta 128GB, 5333MHz (OC).\n¿Es posible instalar allí un kit Corsair Vengeance RGB DDR5-6000?",
+        opts:["Sí, porque tiene 4 slots DIMM libres","No, porque la placa solo soporta DDR4 y el kit es DDR5 (tipo y muesca distintos)","Sí, actualizando solamente la BIOS","No, porque le falta voltaje a la placa"],
+        correct:1, exp:"DDR4 y DDR5 no son compatibles entre sí: tienen una muesca física diferente. Aunque la placa tenga slots DIMM libres, no acepta módulos DDR5 si solo soporta DDR4." },
+      { q:"Según esa misma placa (4x DIMM, máx. 128GB total), si querés llegar a la capacidad máxima usando los 4 slots con módulos idénticos, ¿de qué capacidad debería ser cada módulo?",
+        opts:["8GB","16GB","32GB","64GB"],
+        correct:2, exp:"128GB repartidos en 4 módulos idénticos equivale a 32GB por módulo (4 × 32GB = 128GB)." },
+      { q:"Un Intel Core i5-13400F soporta memoria DDR4-3200 y DDR5-4800, pero tu placa madre B760 instalada solo tiene slots DDR4. ¿Qué tipo de memoria deberías comprar?",
+        opts:["DDR5, porque es más rápida y el CPU la soporta","DDR4, porque es lo que soporta físicamente la placa madre instalada","Cualquiera de las dos, son intercambiables","DDR3, por retrocompatibilidad"],
+        correct:1, exp:"Aunque el CPU soporte ambos tipos, la memoria debe coincidir con lo que la placa madre soporta físicamente. Si la placa solo tiene slots DDR4, hay que comprar DDR4." },
+      { q:"Memoria Corsair Vengeance RGB DDR5-6000: CL36, 1.35V. Memoria genérica DDR5-6000: CL40, 1.35V. Misma frecuencia y voltaje, distinta latencia CAS. ¿Cuál debería responder más rápido a igual frecuencia?",
+        opts:["La de CL40, porque el número es mayor","La de CL36, porque una latencia CAS menor implica menor tiempo de acceso","Da igual, la latencia CAS no afecta el rendimiento","La de mayor voltaje siempre es más rápida"],
+        correct:1, exp:"A igual frecuencia, un valor de CAS Latency (CL) menor significa menos ciclos de espera para acceder a los datos, por lo tanto mejor rendimiento." },
+      { q:"¿Cuál de los siguientes parámetros de una memoria RAM afecta principalmente al RENDIMIENTO y no a la compatibilidad con la placa madre?",
+        opts:["Tipo de memoria (DDR4/DDR5)","Factor de forma (DIMM/SO-DIMM)","Latencia CAS (CL) y frecuencia","Voltaje soportado por los slots"],
+        correct:2, exp:"Tipo, factor de forma y voltaje son parámetros de compatibilidad (deben coincidir con la placa). La frecuencia y la latencia CAS, en cambio, son parámetros que definen el rendimiento de la memoria." },
+      { q:"¿Qué es un perfil XMP/EXPO y para qué sirve?",
+        opts:["Un protocolo de conexión SATA para discos rígidos","Un perfil de overclocking certificado que permite que la RAM alcance su frecuencia máxima anunciada desde la BIOS","Un tipo de factor de forma exclusivo de laptops","Un sistema de refrigeración para los módulos de RAM"],
+        correct:1, exp:"XMP (Intel) y EXPO (AMD) son perfiles de overclocking certificado que configuran automáticamente frecuencia, timings y voltaje para que la RAM alcance su velocidad máxima de forma segura." },
+      { q:"¿Qué configuración permite que el CPU acceda a dos módulos de RAM en paralelo, aumentando el ancho de banda?",
+        opts:["Single Channel","Dual Channel","Modo XMP","Hot-plug"],
+        correct:1, exp:"Dual Channel (o Quad Channel) permite acceder a varios módulos de RAM en paralelo, aumentando el ancho de banda efectivo respecto a un solo canal (Single Channel)." },
+      { q:"¿Qué factor de forma de memoria RAM es compatible con una PC de escritorio (no una laptop)?",
+        opts:["SO-DIMM","DIMM","Ambos son iguales y se usan indistintamente","Ninguno, las PC de escritorio no usan módulos"],
+        correct:1, exp:"DIMM es el factor de forma estándar para PC de escritorio. SO-DIMM es la versión compacta pensada para laptops y no entra físicamente en los slots de una placa de escritorio." }
+    ]
+  },
+  {
+    name: "BLOQUE D · MANTENIMIENTO",
+    label: "Bloque D · Mantenimiento",
+    questions: [
+      { q:"¿Aproximadamente cuántos voltios de electricidad estática puede acumular el cuerpo humano?",
+        opts:["350 voltios","3,500 voltios","35,000 voltios","350,000 voltios"],
+        correct:2, exp:"El cuerpo humano puede acumular hasta 35,000 voltios de electricidad estática, mientras que componentes sensibles pueden dañarse con apenas 100-200 voltios." },
+      { q:"¿Qué medida de protección es esencial antes de manipular componentes internos?",
+        opts:["Trabajar sobre una alfombra","Usar pulsera antiestática conectada a tierra","Usar ropa sintética","Manipular los componentes con el equipo encendido"],
+        correct:1, exp:"La pulsera antiestática conectada a tierra descarga la electricidad estática del cuerpo antes de tocar componentes sensibles como CPU, RAM o chipset." },
+      { q:"¿Qué herramienta booteable se recomienda para un diagnóstico exhaustivo de memoria RAM?",
+        opts:["CrystalDiskInfo","MemTest86+","Prime95","HWMonitor"],
+        correct:1, exp:"MemTest86+ es una herramienta booteable que permite un diagnóstico exhaustivo de la RAM, recomendándose al menos 4 pases completos para confirmar su estado." },
+      { q:"¿Qué síntoma es típico de una falla de memoria RAM al encender el equipo?",
+        opts:["Throttling del procesador","Beeps continuos y el sistema no pasa el POST","Ventiladores a máxima velocidad constante","Alta temperatura en reposo"],
+        correct:1, exp:"Un patrón típico de beeps (por ejemplo 1 largo, 3 cortos) junto con la falla en pasar el POST es un síntoma clásico de problemas de memoria RAM." },
+      { q:"¿Cada cuánto tiempo se recomienda reemplazar la pasta térmica del procesador?",
+        opts:["Cada 6 meses","Cada 2-3 años","Cada 10 años","Solo si el equipo no enciende"],
+        correct:1, exp:"Se recomienda reemplazar la pasta térmica cada 2-3 años para mantener una correcta transferencia de calor entre el CPU y el disipador." },
+      { q:"Si un módulo de RAM falla al probarlo individualmente en un slot, ¿cuál es la acción recomendada?",
+        opts:["Ignorarlo si el sistema arranca igual","Aumentar el voltaje manualmente sin más pruebas","Reemplazar el módulo defectuoso","Cambiar el disipador del CPU"],
+        correct:2, exp:"Si un módulo falla consistentemente en MemTest86+ o en distintos slots, la solución es reemplazarlo; probar en otros slots ayuda primero a descartar un problema del slot en sí." }
+    ]
+  }
+];
+
+let currentSection = 0;
+let currentQ = 0;
+let score = 0;
+let sectionScores = sections.map(()=>0);
+let answered = false;
+let mcTotal = sections.reduce((a,s)=>a+s.questions.length,0);
+
+const roadmapLabels = ["A","B","C","D","E"];
+function renderRoadmap(activeIdx){
+  const rm = document.getElementById('roadmap');
+  rm.innerHTML = '';
+  roadmapLabels.forEach((lab, i) => {
+    const div = document.createElement('div');
+    div.className = 'roadmap-step';
+    if(i < activeIdx) div.classList.add('done');
+    if(i === activeIdx) div.classList.add('active');
+    div.textContent = 'BLOQUE ' + lab;
+    rm.appendChild(div);
+  });
+}
+renderRoadmap(0);
+
+const postMessages = [
+  "Inicializando controlador de memoria... <span class='ok'>OK</span>",
+  "Detectando placa madre... <span class='ok'>OK</span>",
+  "Verificando módulos DIMM... <span class='ok'>OK</span>",
+  "Cargando banco de preguntas... <span class='ok'>OK</span>"
+];
+document.getElementById('postLog').innerHTML = postMessages.join('<br>');
+
+function hideAllScreens(){
+  document.querySelectorAll('.section-banner').forEach(b=>b.classList.remove('active'));
+  document.getElementById('card').classList.remove('active');
+  document.getElementById('openCard').classList.remove('active');
+  document.getElementById('results').classList.remove('active');
+}
+
+function startMC(idx){
+  hideAllScreens();
+  currentSection = idx;
+  currentQ = 0;
+  document.getElementById('card').classList.add('active');
+  renderRoadmap(idx);
+  renderQuestion();
+}
+
+function renderQuestion(){
+  answered = false;
+  const sec = sections[currentSection];
+  const q = sec.questions[currentQ];
+  document.getElementById('cardBlock').textContent = sec.name;
+  document.getElementById('cardCounter').textContent =
+    'Q' + String(currentQ+1).padStart(2,'0') + '/' + String(sec.questions.length).padStart(2,'0');
+  document.getElementById('progressFill').style.width = (((currentQ)/sec.questions.length)*100) + '%';
+  document.getElementById('questionText').textContent = q.q;
+
+  const diagramWrap = document.getElementById('diagramWrap');
+  if(q.diagram){
+    document.getElementById('diagramContainer').innerHTML = mbDiagram;
+    diagramWrap.classList.add('show');
+  } else {
+    diagramWrap.classList.remove('show');
+    document.getElementById('diagramContainer').innerHTML = '';
+  }
+
+  const list = document.getElementById('optionsList');
+  list.innerHTML = '';
+  const letters = ['A','B','C','D'];
+  q.opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt';
+    btn.setAttribute('data-letter', letters[i] + ')');
+    btn.textContent = opt;
+    btn.onclick = () => selectAnswer(i);
+    list.appendChild(btn);
+  });
+
+  document.getElementById('feedback').classList.remove('show','ok','bad');
+  document.getElementById('nextBtn').disabled = true;
+  const isLastQ = currentQ === sec.questions.length - 1;
+  const isLastSection = currentSection === sections.length - 1;
+  document.getElementById('nextBtn').textContent =
+    (isLastQ && isLastSection) ? 'IR AL BLOQUE E →' : (isLastQ ? 'FINALIZAR BLOQUE →' : 'SIGUIENTE →');
+}
+
+function selectAnswer(i){
+  if(answered) return;
+  answered = true;
+  const sec = sections[currentSection];
+  const q = sec.questions[currentQ];
+  const opts = document.querySelectorAll('#optionsList .opt');
+  opts.forEach((b, idx) => {
+    b.disabled = true;
+    if(idx === q.correct) b.classList.add(idx === i ? 'correct' : 'reveal');
+    if(idx === i && i !== q.correct) b.classList.add('wrong');
+  });
+
+  const fb = document.getElementById('feedback');
+  const tag = document.getElementById('feedbackTag');
+  const text = document.getElementById('feedbackText');
+  fb.classList.add('show');
+  if(i === q.correct){
+    fb.classList.add('ok'); fb.classList.remove('bad');
+    tag.textContent = '✔ CORRECTO';
+    score++; sectionScores[currentSection]++;
+  } else {
+    fb.classList.add('bad'); fb.classList.remove('ok');
+    tag.textContent = '✘ INCORRECTO';
+  }
+  text.textContent = q.exp;
+  document.getElementById('nextBtn').disabled = false;
+  document.getElementById('progressFill').style.width = (((currentQ+1)/sec.questions.length)*100) + '%';
+}
+
+function nextQuestion(){
+  const sec = sections[currentSection];
+  if(currentQ < sec.questions.length - 1){
+    currentQ++;
+    renderQuestion();
+  } else if(currentSection < sections.length - 1){
+    hideAllScreens();
+    currentSection++;
+    document.getElementById('banner-'+currentSection).classList.add('active');
+    renderRoadmap(currentSection);
+  } else {
+    hideAllScreens();
+    document.getElementById('banner-open').classList.add('active');
+    renderRoadmap(4);
+  }
+}
+
+/* ============ OPEN / DEVELOPMENT BLOCK (E) ============ */
+const openQuestions = [
+  {
+    points: 2,
+    q: "¿Qué es una memoria RAM? ¿Cuál es su función?",
+    data: null,
+    model: "<ul>"+
+      "<li><b>Qué es:</b> una tarjeta con pines de contacto, una muesca y chips de memoria volátil integrados. Es volátil: pierde toda su información al apagar el equipo.</li>"+
+      "<li><b>Función:</b> almacenar temporalmente los procesos (datos e instrucciones) que el CPU necesita acceder rápidamente durante la ejecución, actuando como memoria de trabajo del sistema.</li>"+
+      "</ul>"
+  },
+  {
+    points: 2,
+    q: "Dadas las siguientes memorias RAM, indicá qué características se tienen en cuenta para la compatibilidad con la placa madre y cuáles para el rendimiento:",
+    data: "Memoria RAM Patriot Signature Line 16GB (2x8GB) 5600MHz DDR5, UDIMM, CAS CL40, 1.35V\nMemoria ADATA SO-DIMM DDR4 16GB 3200MHz, CL22, 1.2V",
+    model: "<ul>"+
+      "<li><b>Características de compatibilidad</b> (deben coincidir con lo que soporta la placa madre): <b>tipo de memoria</b> (DDR5 vs DDR4, no intercambiables, muesca diferente), <b>factor de forma</b> (UDIMM para PC de escritorio vs SO-DIMM para notebooks) y <b>voltaje</b> (1.35V / 1.2V, debe estar dentro de lo soportado por los slots DIMM de la placa).</li>"+
+      "<li><b>Características de rendimiento</b> (una vez asegurada la compatibilidad, determinan qué tan rápida es la memoria): <b>frecuencia</b> (5600MHz vs 3200MHz) y <b>latencia CAS</b> (CL40 vs CL22 — conviene comparar la latencia real en nanosegundos, no solo el número de CL, ya que depende también de la frecuencia).</li>"+
+      "</ul>"
+  },
+  {
+    points: 2,
+    q: "Indicá al menos dos fallas relacionadas a la memoria RAM. ¿Cómo las solucionarías?",
+    data: null,
+    model: "<ul>"+
+      "<li><b>Pantallazos azules (BSOD) o sistema que no pasa el POST</b> (con beeps característicos): se soluciona corriendo MemTest86+ (mínimo 4 pases), probando cada módulo individualmente en distintos slots, limpiando los contactos dorados y, si el módulo falla consistentemente, reemplazándolo.</li>"+
+      "<li><b>Dual Channel que no funciona</b> (el sistema detecta la RAM en Single Channel): se soluciona verificando que los módulos estén en los slots correctos según el manual (por ejemplo A2-B2), usando módulos idénticos (mismo modelo, frecuencia y capacidad) y confirmando en la BIOS que detecta el modo dual channel.</li>"+
+      "</ul>"
+  },
+  {
+    points: 1,
+    q: "De los chipsets más importantes, ¿cuál brinda información acerca de las interfaces y versiones soportadas de SATA, USB, PCIe, entre otros?",
+    data: null,
+    model: "<ul><li>El <b>chipset</b> de la placa madre (por ejemplo Z790, B760 de Intel o X670E, B650 de AMD). Es el componente que determina qué versiones de SATA, USB y PCIe soporta el sistema, además de la cantidad de puertos disponibles y las tecnologías habilitadas.</li></ul>"
+  },
+  {
+    points: 3,
+    q: "Dada la siguiente placa madre, respondé:\n1) ¿Qué procesadores son compatibles con dicha placa madre?\n2) ¿Cuántos módulos de memoria RAM pueden conectarse, de qué capacidad c/u y en total? ¿Qué otras especificaciones se deben tener en cuenta para comprar memoria compatible?\n3) ¿Es posible agregar tarjetas gráficas u otras tarjetas de expansión? ¿En qué slots?",
+    data: "Z390 AORUS Master (Gigabyte)\nFactor de forma: ATX | Socket: LGA1151 (Coffee Lake, 9na Gen. Core)\nChipset: Z390 Intel | Tetra-CrossFire, Tetra-SLI\nExpansión: 2x PCIe 3.0 x16, 1x PCIe 3.0 x4, 3x PCIe x1\nMemoria: 4 bancos, doble canal, máx. 64GB, tipo DDR4, hasta 4133+ MHz (OC)\nOverclocking: CPU + GPU + RAM",
+    model: "<ul>"+
+      "<li><b>1) Procesadores compatibles:</b> CPUs Intel con socket LGA1151 de 8va y 9na generación (Coffee Lake / Coffee Lake Refresh), ya que el chipset Z390 fue diseñado para esa familia.</li>"+
+      "<li><b>2) Memoria RAM:</b> tiene 4 bancos (slots) en configuración doble canal, admitiendo hasta 64GB en total — por ejemplo, 4 módulos de 16GB c/u. Al comprar memoria hay que verificar además: tipo <b>DDR4</b> (no DDR3/DDR5), frecuencia soportada (hasta 4133+ MHz en OC, siempre con perfil XMP), voltaje compatible con la placa, y usar módulos idénticos entre sí para asegurar el correcto funcionamiento en dual channel.</li>"+
+      "<li><b>3) Tarjetas de expansión:</b> sí, es posible. Las gráficas (GPU) se instalan en los slots <b>PCIe 3.0 x16</b> (hay 2, permitiendo incluso configuraciones multi-GPU tipo SLI/CrossFire), y otras tarjetas (red, sonido, etc.) se instalan en el slot <b>PCIe 3.0 x4</b> o en los <b>3 slots PCIe x1</b>.</li>"+
+      "</ul>"
+  }
+];
+
+let openIdx = 0;
+let openScore = 0;
+let openMax = openQuestions.reduce((a,q)=>a+q.points,0);
+let openPicked = false;
+
+function startOpen(){
+  hideAllScreens();
+  openIdx = 0;
+  document.getElementById('openCard').classList.add('active');
+  renderRoadmap(4);
+  renderOpenQuestion();
+}
+
+function renderOpenQuestion(){
+  openPicked = false;
+  const q = openQuestions[openIdx];
+  document.getElementById('openCounter').textContent = 'P' + (openIdx+1) + '/' + openQuestions.length;
+  document.getElementById('openProgressFill').style.width = ((openIdx/openQuestions.length)*100) + '%';
+  document.getElementById('openPoints').textContent = q.points + (q.points===1?' PTO':' PTS');
+  document.getElementById('openQuestionText').textContent = q.q;
+
+  const dataBlock = document.getElementById('openDataBlock');
+  if(q.data){ dataBlock.style.display='block'; dataBlock.textContent = q.data; }
+  else { dataBlock.style.display='none'; dataBlock.textContent=''; }
+
+  document.getElementById('openAnswerBox').value = '';
+  document.getElementById('modelAnswer').classList.remove('show');
+  document.getElementById('modelAnswerBody').innerHTML = q.model;
+  document.getElementById('selfscoreRow').classList.remove('show');
+  document.getElementById('revealBtn').disabled = false;
+  document.getElementById('openNextBtn').disabled = true;
+
+  const isLast = openIdx === openQuestions.length - 1;
+  document.getElementById('openNextBtn').textContent = isLast ? 'VER RESULTADOS →' : 'SIGUIENTE →';
+
+  const opts = document.getElementById('selfscoreOptions');
+  opts.innerHTML = '';
+  const choices = q.points === 1
+    ? [[0,'0 pt'],[1,q.points+' pt']]
+    : [[0,'0 pt'],[Math.round(q.points/2*10)/10,(Math.round(q.points/2*10)/10)+' pt'],[q.points,q.points+' pt']];
+  choices.forEach(([val,label]) => {
+    const b = document.createElement('button');
+    b.className = 'score-opt';
+    b.textContent = label;
+    b.onclick = () => pickSelfScore(val, b);
+    opts.appendChild(b);
+  });
+}
+
+function revealModelAnswer(){
+  document.getElementById('modelAnswer').classList.add('show');
+  document.getElementById('selfscoreRow').classList.add('show');
+  document.getElementById('revealBtn').disabled = true;
+}
+
+function pickSelfScore(val, btn){
+  document.querySelectorAll('#selfscoreOptions .score-opt').forEach(b=>b.classList.remove('picked'));
+  btn.classList.add('picked');
+  if(!openPicked){
+    openScore += val;
+  } else {
+    openScore = openScore - openQuestions[openIdx]._lastPick + val;
+  }
+  openQuestions[openIdx]._lastPick = val;
+  openPicked = true;
+  document.getElementById('openNextBtn').disabled = false;
+  document.getElementById('openProgressFill').style.width = (((openIdx+1)/openQuestions.length)*100) + '%';
+}
+
+function nextOpenQuestion(){
+  if(openIdx < openQuestions.length - 1){
+    openIdx++;
+    renderOpenQuestion();
+  } else {
+    showResults();
+  }
+}
+
+/* ============ RESULTS ============ */
+function showResults(){
+  hideAllScreens();
+  document.getElementById('results').classList.add('active');
+  renderRoadmap(5);
+
+  const combinedTotal = mcTotal + openMax;
+  const combinedScore = score + openScore;
+  document.getElementById('scoreBig').textContent = combinedScore + '/' + combinedTotal;
+
+  const pct = (combinedScore/combinedTotal)*100;
+  let statusHtml = '';
+  if(pct >= 85){ statusHtml = "<span class='good'>SYSTEM STATUS: ESTABLE.</span> Excelente dominio de los temas evaluados."; }
+  else if(pct >= 60){ statusHtml = "<span class='warn'>SYSTEM STATUS: FUNCIONAL CON ADVERTENCIAS.</span> Buen desempeño, pero conviene repasar algunos puntos."; }
+  else { statusHtml = "<span class='bad'>SYSTEM STATUS: FALLO DETECTADO.</span> Se recomienda repasar la guía antes de continuar."; }
+  document.getElementById('statusLine').innerHTML = statusHtml;
+
+  const bd = document.getElementById('breakdown');
+  bd.innerHTML = '';
+  sections.forEach((sec, idx) => {
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.innerHTML = '<span>'+sec.label+'</span><span>'+sectionScores[idx]+'/'+sec.questions.length+'</span>';
+    bd.appendChild(row);
+  });
+  const openRow = document.createElement('div');
+  openRow.className = 'breakdown-row';
+  openRow.innerHTML = '<span>Bloque E · Desarrollo (autoeval.)</span><span>'+(Math.round(openScore*10)/10)+'/'+openMax+' pts</span>';
+  bd.appendChild(openRow);
+
+  const totalRow = document.createElement('div');
+  totalRow.className = 'breakdown-row total';
+  totalRow.innerHTML = '<span>TOTAL</span><span>'+combinedScore+'/'+combinedTotal+'</span>';
+  bd.appendChild(totalRow);
+}
+
+function restartAll(){
+  currentSection = 0; currentQ = 0; score = 0; sectionScores = sections.map(()=>0);
+  openIdx = 0; openScore = 0;
+  openQuestions.forEach(q => { q._lastPick = 0; });
+  hideAllScreens();
+  document.getElementById('banner-0').classList.add('active');
+  renderRoadmap(0);
+}
+
+// init
+document.getElementById('banner-0').classList.add('active');
+</script>
 </body>
 </html>
-
