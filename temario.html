@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Temario · Portal de Accesos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip-link" href="#contenido">Saltar al contenido</a>
+
+<div class="wrap" id="contenido">
+  <header class="top">
+    <div>
+      <p class="eyebrow">Índice de contenidos</p>
+      <h1>Temario</h1>
+      <p class="sub">Todos los temas de los cuatro módulos, agrupados por trimestre o por módulo.</p>
+    </div>
+    <nav class="top-nav">
+      <a href="index.html">← Volver a los accesos</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="view-toggle" role="tablist" aria-label="Cambiar agrupación">
+      <button type="button" id="btnTrimestre" class="active" role="tab" aria-selected="true">Por trimestre</button>
+      <button type="button" id="btnTema" role="tab" aria-selected="false">Por módulo</button>
+    </div>
+
+    <div id="listado"></div>
+  </main>
+
+  <footer class="note">
+    · Este listado se genera desde el array <code>TEMARIO</code> en <code>temario.js</code>. Añade, quita o reordena temas editando ese archivo.
+  </footer>
+</div>
+
+<script src="temario.js"></script>
+</body>
+</html>

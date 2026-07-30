@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal de Accesos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip-link" href="#contenido">Saltar al contenido</a>
+
+<div class="wrap" id="contenido">
+  <header class="top">
+    <div>
+      <p class="eyebrow">Portal de accesos · pruebas por módulo</p>
+      <h1>Elige tu credencial</h1>
+      <p class="sub">Cada tarjeta da acceso a un test. Necesitarás el código de validación correspondiente.</p>
+    </div>
+    <nav class="top-nav">
+      <a href="temario.html">Ver temario completo →</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="badges" id="badges">
+      <!-- Las tarjetas se generan desde script.js a partir de ACCESOS -->
+    </div>
+  </main>
+
+  <footer class="note">
+    · Los códigos de validación se comprueban en el propio navegador: es un filtro simple, no una medida de seguridad real. No lo uses para proteger contenido sensible.<br>
+    · Para cambiar los códigos o los destinos, edita el objeto <code>ACCESOS</code> al inicio de <code>script.js</code>.
+  </footer>
+</div>
+
+<!-- Modal / terminal de validación -->
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="terminal" role="dialog" aria-modal="true" aria-labelledby="terminalTitle">
+    <div class="bar">
+      <span class="dots"><span></span><span></span><span></span></span>
+      <span id="terminalTitle">Terminal de acceso</span>
+      <button class="close" id="closeModal" aria-label="Cerrar">✕</button>
+    </div>
+    <div class="body">
+      <p class="prompt-line">Introduce el código de validación para <strong id="moduloNombre">—</strong>:</p>
+      <form id="codeForm">
+        <div class="prompt-row">
+          <span class="chevron">›</span>
+          <input
+            type="text"
+            id="codeInput"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="código de acceso"
+            aria-label="Código de validación"
+          >
+        </div>
+        <div class="actions">
+          <button type="submit" class="btn btn-primary">Validar</button>
+          <button type="button" class="btn btn-ghost" id="cancelBtn">Cancelar</button>
+        </div>
+        <p class="status-line" id="statusLine" aria-live="polite"></p>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
