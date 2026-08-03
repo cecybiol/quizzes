@@ -3,28 +3,1338 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Test · Mantenimiento de HW</title>
+<title>Autoevaluación · Instalación y Administración de Sistemas</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0f141b;
+    --panel:#161e28;
+    --panel-2:#1c2632;
+    --border:#2a3646;
+    --text:#e9eef4;
+    --text-dim:#93a3b8;
+    --text-dim2:#6c7d92;
+
+    --s1:#e8a33d; /* particionado teoria */
+    --s2:#f0c06b; /* particionado practica */
+    --s3:#3ec9b0; /* directorios teoria */
+    --s4:#82ddc9; /* rutas/archivos practica */
+    --s5:#4fa8e8; /* diagnostico/servicios */
+    --s6:#a692f2; /* instalacion de programas */
+    --s7:#e2708f; /* compatibilidad */
+
+    --ok:#5fd38d;
+    --bad:#e2604f;
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(1100px 500px at 15% -10%, rgba(232,163,61,.08), transparent 60%),
+      radial-gradient(900px 500px at 90% 10%, rgba(79,168,232,.08), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Inter', -apple-system, sans-serif;
+    line-height:1.55;
+    padding-bottom:80px;
+  }
+  h1,h2,h3,.mono-title{font-family:'Space Grotesk', sans-serif;}
+  code, .mono, pre, textarea, .cmd{font-family:'JetBrains Mono', ui-monospace, monospace;}
+
+  a{color:var(--s5);}
+
+  /* ---------- HEADER ---------- */
+  header{
+    max-width:980px;
+    margin:0 auto;
+    padding:52px 24px 20px;
+  }
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12.5px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--s1);
+    margin:0 0 14px;
+  }
+  header h1{
+    font-size:clamp(28px, 4.4vw, 42px);
+    line-height:1.12;
+    margin:0 0 16px;
+    font-weight:700;
+    max-width:720px;
+  }
+  header p.lead{
+    color:var(--text-dim);
+    max-width:640px;
+    font-size:15.5px;
+    margin:0 0 8px;
+  }
+  .instrucciones{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:18px 20px;
+    margin-top:22px;
+    font-size:14.5px;
+    color:var(--text-dim);
+  }
+  .instrucciones b{color:var(--text);}
+  .instrucciones ul{margin:8px 0 0; padding-left:20px;}
+  .instrucciones li{margin-bottom:4px;}
+
+  /* ---------- PARTITION BAR (signature element) ---------- */
+  .disk-wrap{
+    max-width:980px;
+    margin:30px auto 0;
+    padding:0 24px;
+  }
+  .disk-label-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    margin-bottom:8px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    color:var(--text-dim2);
+    text-transform:uppercase;
+    letter-spacing:.08em;
+  }
+  #activePartitionLabel{color:var(--text); font-weight:600; text-transform:none; letter-spacing:0;}
+  .disk-bar{
+    display:flex;
+    width:100%;
+    height:46px;
+    border-radius:8px;
+    overflow:hidden;
+    border:1px solid var(--border);
+    background:var(--panel);
+  }
+  .disk-seg{
+    height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    font-weight:600;
+    color:#0f141b;
+    cursor:pointer;
+    text-decoration:none;
+    transition:filter .15s ease, transform .15s ease;
+    border-right:1px solid rgba(15,20,27,.35);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    padding:0 4px;
+    opacity:.55;
+  }
+  .disk-seg:last-child{border-right:none;}
+  .disk-seg:hover{filter:brightness(1.1);}
+  .disk-seg.active{
+    opacity:1;
+    transform:scaleY(1.06);
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,.35);
+  }
+  .disk-legend{
+    display:flex;
+    flex-wrap:wrap;
+    gap:14px;
+    margin-top:10px;
+    font-size:11.5px;
+    font-family:'JetBrains Mono', monospace;
+    color:var(--text-dim2);
+  }
+  .disk-legend span{display:inline-flex; align-items:center; gap:6px;}
+  .dot{width:9px; height:9px; border-radius:2px; display:inline-block;}
+
+  /* score pill */
+  #scoreBar{
+    position:sticky; top:0; z-index:40;
+    backdrop-filter:blur(10px);
+    background:rgba(15,20,27,.86);
+    border-bottom:1px solid var(--border);
+    display:flex;
+    justify-content:center;
+  }
+  #scoreBarInner{
+    max-width:980px; width:100%;
+    padding:10px 24px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:13px;
+  }
+  #scoreBarInner .brand{color:var(--text-dim2); letter-spacing:.06em;}
+  #scoreText{color:var(--text); font-weight:600;}
+  #scoreText .num{color:var(--s1);}
+
+  /* ---------- SECTIONS ---------- */
+  main{max-width:980px; margin:0 auto; padding:0 24px;}
+  section.block{
+    padding:56px 0 18px;
+    border-top:1px solid var(--border);
+    scroll-margin-top:70px;
+  }
+  section.block:first-of-type{border-top:none;}
+  .sec-head{
+    display:flex;
+    align-items:flex-start;
+    gap:16px;
+    margin-bottom:6px;
+  }
+  .sec-chip{
+    flex:none;
+    width:38px; height:38px;
+    border-radius:8px;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'JetBrains Mono', monospace;
+    font-weight:700;
+    font-size:13px;
+    color:#0f141b;
+  }
+  .sec-head h2{
+    margin:0;
+    font-size:22px;
+    font-weight:600;
+  }
+  .sec-sub{
+    color:var(--text-dim); font-size:14px; margin:2px 0 0;
+  }
+  .sec-kicker{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.1em;
+    color:var(--text-dim2);
+    margin:0 0 4px;
+  }
+  .sec-note{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-left:3px solid var(--s5);
+    border-radius:0 8px 8px 0;
+    padding:12px 16px;
+    font-size:13.5px;
+    color:var(--text-dim);
+    margin:18px 0 28px;
+  }
+  .sec-note b{color:var(--text);}
+
+  /* ---------- MC QUESTIONS ---------- */
+  .quiz-q{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:18px 20px 16px;
+    margin-bottom:14px;
+  }
+  .quiz-q p.qtext{
+    margin:0 0 12px;
+    font-size:15px;
+    font-weight:500;
+  }
+  .quiz-q .qnum{color:var(--text-dim2); font-family:'JetBrains Mono', monospace; font-weight:400; margin-right:6px;}
+  .opt{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    padding:8px 10px;
+    border-radius:7px;
+    margin-bottom:4px;
+    cursor:pointer;
+    font-size:14px;
+    border:1px solid transparent;
+    transition:background .12s ease;
+  }
+  .opt:hover{background:var(--panel-2);}
+  .opt input{margin-top:3px; accent-color:var(--s1);}
+  .opt.correct{background:rgba(95,211,141,.12); border-color:rgba(95,211,141,.4); color:var(--ok);}
+  .opt.incorrect{background:rgba(226,96,79,.12); border-color:rgba(226,96,79,.4); color:var(--bad);}
+  .qfeedback{
+    display:none;
+    margin-top:8px;
+    font-size:13px;
+    padding:9px 12px;
+    border-radius:7px;
+    font-family:'JetBrains Mono', monospace;
+  }
+  .qfeedback.show{display:block;}
+  .qfeedback.ok{background:rgba(95,211,141,.1); color:var(--ok);}
+  .qfeedback.bad{background:rgba(226,96,79,.1); color:var(--bad);}
+
+  .corregir-btn{
+    background:var(--s1);
+    color:#161006;
+    border:none;
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600;
+    font-size:14px;
+    padding:11px 22px;
+    border-radius:7px;
+    cursor:pointer;
+    margin:8px 0 6px;
+    transition:filter .15s ease;
+  }
+  .corregir-btn:hover{filter:brightness(1.08);}
+  .corregir-btn.s3, .corregir-btn.s4{background:var(--s3); color:#08211c;}
+  .corregir-btn.s5{background:var(--s5); color:#071a2b;}
+  .corregir-btn.s6{background:var(--s6); color:#150f2b;}
+  .corregir-btn.s7{background:var(--s7); color:#2b0c15;}
+
+  .section-score{
+    font-family:'JetBrains Mono', monospace;
+    font-size:13px;
+    color:var(--text-dim);
+    margin-left:6px;
+  }
+
+  /* ---------- PRACTICAL EXERCISES ---------- */
+  .ex{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:18px 20px 18px;
+    margin-bottom:16px;
+  }
+  .ex .extag{
+    font-family:'JetBrains Mono', monospace;
+    font-size:10.5px;
+    text-transform:uppercase;
+    letter-spacing:.09em;
+    color:var(--panel);
+    background:var(--s2);
+    display:inline-block;
+    padding:2px 8px;
+    border-radius:4px;
+    margin-bottom:10px;
+    font-weight:700;
+  }
+  .ex p.qtext{margin:0 0 12px; font-size:15px; font-weight:500;}
+  .ex textarea{
+    width:100%;
+    min-height:70px;
+    background:#0d1319;
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:7px;
+    padding:11px 13px;
+    font-size:13.5px;
+    resize:vertical;
+    outline:none;
+  }
+  .ex textarea:focus{border-color:var(--s2);}
+  .reveal-btn{
+    margin-top:10px;
+    background:transparent;
+    border:1px solid var(--border);
+    color:var(--text-dim);
+    font-family:'JetBrains Mono', monospace;
+    font-size:12.5px;
+    padding:8px 14px;
+    border-radius:6px;
+    cursor:pointer;
+    transition:all .15s ease;
+  }
+  .reveal-btn:hover{border-color:var(--s2); color:var(--text);}
+  .solution{
+    display:none;
+    margin-top:12px;
+    background:#0d1319;
+    border:1px solid var(--border);
+    border-left:3px solid var(--s2);
+    border-radius:0 8px 8px 0;
+    padding:12px 16px;
+    font-size:13px;
+  }
+  .solution.show{display:block;}
+  .solution .sol-label{
+    font-family:'JetBrains Mono', monospace;
+    font-size:10.5px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--s2);
+    margin-bottom:8px;
+    display:block;
+  }
+  .solution pre{
+    margin:0;
+    white-space:pre-wrap;
+    word-break:break-word;
+    font-size:13px;
+    color:#d8e6df;
+    line-height:1.6;
+  }
+  .solution .expl{
+    margin-top:8px;
+    color:var(--text-dim);
+    font-family:'Inter', sans-serif;
+    font-size:13px;
+  }
+  .prompt-sym{color:var(--s2);}
+
+  /* ---------- PARTITION TABLE EXERCISES (sección 2) ---------- */
+  .parttable{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:6px;
+    font-size:13px;
+  }
+  .parttable th{
+    text-align:left;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:var(--text-dim2);
+    padding:6px 8px;
+    border-bottom:1px solid var(--border);
+  }
+  .parttable td{
+    padding:5px 6px;
+    border-bottom:1px solid var(--border);
+  }
+  .parttable input{
+    width:100%;
+    background:#0d1319;
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:5px;
+    padding:7px 8px;
+    font-size:13px;
+    font-family:'JetBrains Mono', monospace;
+    outline:none;
+  }
+  .parttable input:focus{border-color:var(--s2);}
+  .parttable td.add-row-cell{padding-top:10px; border-bottom:none;}
+  .addrow-btn{
+    background:transparent;
+    border:1px dashed var(--border);
+    color:var(--text-dim);
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    padding:6px 12px;
+    border-radius:6px;
+    cursor:pointer;
+  }
+  .addrow-btn:hover{border-color:var(--s2); color:var(--text);}
+  .sol-table{width:100%; border-collapse:collapse; font-size:12.5px;}
+  .sol-table th, .sol-table td{border-bottom:1px solid var(--border); padding:6px 8px; text-align:left;}
+  .sol-table th{color:var(--s2); font-family:'JetBrains Mono', monospace; font-weight:600; font-size:11px; text-transform:uppercase;}
+
+  /* reference box for pkg managers */
+  .refbox{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:16px 20px;
+    margin:22px 0 28px;
+  }
+  .refbox h4{margin:0 0 10px; font-size:13.5px; font-family:'JetBrains Mono', monospace; color:var(--s6); text-transform:uppercase; letter-spacing:.06em;}
+  .refbox table{width:100%; border-collapse:collapse; font-size:13px;}
+  .refbox th, .refbox td{padding:6px 8px; border-bottom:1px solid var(--border); text-align:left;}
+  .refbox th{color:var(--text-dim2); font-family:'JetBrains Mono', monospace; font-weight:500; font-size:11.5px;}
+  .refbox td code{color:var(--s6);}
+
+  /* ---------- FINAL SUMMARY ---------- */
+  #finalSummary{
+    margin-top:60px;
+    border-top:1px solid var(--border);
+    padding:44px 0 60px;
+    text-align:center;
+  }
+  #finalSummary h2{font-size:24px; margin-bottom:10px;}
+  #finalScoreDisplay{
+    font-family:'JetBrains Mono', monospace;
+    font-size:44px;
+    font-weight:700;
+    color:var(--s1);
+    margin:14px 0 6px;
+  }
+  #finalScoreMsg{color:var(--text-dim); font-size:14.5px; max-width:520px; margin:0 auto 22px;}
+  #corregirTodo{
+    background:var(--text);
+    color:#0f141b;
+    border:none;
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:15px;
+    padding:14px 30px;
+    border-radius:8px;
+    cursor:pointer;
+  }
+  #corregirTodo:hover{filter:brightness(.92);}
+
+  code.inline{
+    background:#0d1319;
+    border:1px solid var(--border);
+    padding:1px 6px;
+    border-radius:4px;
+    font-size:.92em;
+    color:var(--s2);
+  }
+
+  @media (max-width: 640px){
+    header{padding:36px 18px 14px;}
+    main{padding:0 18px;}
+    .disk-wrap{padding:0 18px;}
+    .disk-seg{font-size:0;}
+    section.block{padding:42px 0 10px;}
+    .sec-head h2{font-size:19px;}
+  }
+</style>
 </head>
 <body>
-<div class="wrap">
-  <header class="top">
-    <div>
-      <p class="eyebrow">Acceso concedido</p>
-      <h1>Test · Mantenimiento de HW</h1>
-      <p class="sub">Esta es una página de ejemplo. Sustituye este contenido por tu test real de Mantenimiento de HW.</p>
-    </div>
-    <nav class="top-nav">
-      <a href="index.html">← Volver a los accesos</a>
-    </nav>
-  </header>
-  <main>
-    <p style="font-family: var(--font-mono); color: var(--mist); font-size: 0.9rem;">
-      // TODO: sustituir este bloque por el test de Mantenimiento de HW
-    </p>
-  </main>
+
+<div id="scoreBar">
+  <div id="scoreBarInner">
+    <span class="brand">// autoevaluación</span>
+    <span id="scoreText">Puntaje opción múltiple: <span class="num">0</span>/<span id="totalPosible">0</span></span>
+  </div>
 </div>
+
+<header>
+  <p class="eyebrow">Autoevaluación · Instalación y administración de sistemas</p>
+  <h1>Particionado, arranque dual, estructura de directorios y gestión de paquetes</h1>
+  <p class="lead">Test de autoevaluación sobre instalación personalizada de Windows y Linux, organización del sistema de archivos, comandos de administración y formas de instalar software.</p>
+
+  <div class="instrucciones">
+    <b>Cómo usar este test</b>
+    <ul>
+      <li>Las preguntas de <b>opción múltiple</b> se corrigen solas: elegí una respuesta y tocá el botón "Corregir" de esa sección (o el botón final para corregir todo junto).</li>
+      <li>Los <b>ejercicios prácticos</b> (comandos, particionado) no tienen corrección automática: escribí tu respuesta y después tocá "Ver respuesta sugerida" para comparar. En Linux casi siempre hay más de una forma correcta de resolver algo — comparalo por lógica, no letra por letra.</li>
+      <li>La barra de abajo simula un disco dividido en "particiones" temáticas: te muestra en qué sección estás parado a medida que recorrés el test.</li>
+    </ul>
+  </div>
+</header>
+
+<div class="disk-wrap">
+  <div class="disk-label-row">
+    <span>disco0 — 500 gb — gpt</span>
+    <span id="activePartitionLabel">deslizá para empezar ↓</span>
+  </div>
+  <div class="disk-bar" id="diskBar">
+    <a href="#sec1" class="disk-seg" data-sec="sec1" style="background:var(--s1); flex-basis:12%;">PART-01</a>
+    <a href="#sec2" class="disk-seg" data-sec="sec2" style="background:var(--s2); flex-basis:16%;">PART-02</a>
+    <a href="#sec3" class="disk-seg" data-sec="sec3" style="background:var(--s3); flex-basis:8%;">PART-03</a>
+    <a href="#sec4" class="disk-seg" data-sec="sec4" style="background:var(--s4); flex-basis:14%;">PART-04</a>
+    <a href="#sec5" class="disk-seg" data-sec="sec5" style="background:var(--s5); flex-basis:20%;">PART-05</a>
+    <a href="#sec6" class="disk-seg" data-sec="sec6" style="background:var(--s6); flex-basis:16%;">PART-06</a>
+    <a href="#sec7" class="disk-seg" data-sec="sec7" style="background:var(--s7); flex-basis:14%;">PART-07</a>
+  </div>
+  <div class="disk-legend">
+    <span><span class="dot" style="background:var(--s1)"></span>01 · Particionado — teoría (60GB)</span>
+    <span><span class="dot" style="background:var(--s2)"></span>02 · Particionado — práctica (80GB)</span>
+    <span><span class="dot" style="background:var(--s3)"></span>03 · Directorios Linux — teoría (40GB)</span>
+    <span><span class="dot" style="background:var(--s4)"></span>04 · Rutas y archivos — práctica (70GB)</span>
+    <span><span class="dot" style="background:var(--s5)"></span>05 · Diagnóstico y servicios (100GB)</span>
+    <span><span class="dot" style="background:var(--s6)"></span>06 · Instalación de programas (80GB)</span>
+    <span><span class="dot" style="background:var(--s7)"></span>07 · Compatibilidad de paquetes .deb (70GB)</span>
+  </div>
+</div>
+
+<main>
+
+<!-- =========================================================
+     SECCIÓN 1 — TEORÍA: INSTALACIÓN Y PARTICIONADO
+========================================================== -->
+<section class="block" id="sec1">
+  <div class="sec-head">
+    <div class="sec-chip" style="background:var(--s1);">01</div>
+    <div>
+      <p class="sec-kicker">Teoría</p>
+      <h2>Instalación de Windows y Linux con particionado personalizado</h2>
+      <p class="sec-sub">Tipos de partición, tablas de particiones y separación entre sistema operativo y datos de usuario.</p>
+    </div>
+  </div>
+
+  <div class="quiz-q" data-correct="b">
+    <p class="qtext"><span class="qnum">1.1</span>En un disco con tabla de particiones GPT que arranca en modo UEFI, ¿qué partición especial se necesita crear para poder iniciar el sistema?</p>
+    <label class="opt"><input type="radio" name="q1-1" value="a"> Partición de recuperación</label>
+    <label class="opt"><input type="radio" name="q1-1" value="b"> EFI System Partition (ESP), formateada en FAT32</label>
+    <label class="opt"><input type="radio" name="q1-1" value="c"> Partición swap</label>
+    <label class="opt"><input type="radio" name="q1-1" value="d"> Partición MSR únicamente</label>
+    <div class="qfeedback"></div>
+  </div>
+
+  <div class="quiz-q" data-correct="b">
+    <p class="qtext"><span class="qnum">1.2</span>¿Cuál es el principal motivo para crear una partición <code class="inline">/home</code> separada del resto del sistema en Linux?</p>
+    <label class="opt"><input type="radio" name="q1-2" value="a"> Mejora la velocidad de arranque del sistema</label>
+    <label class="opt"><input type="radio" name="q1-2" value="b"> Permite reinstalar o formatear el sistema sin perder los archivos y configuraciones del usuario</label>
+    <label class="opt"><input type="radio" name="q1-2" value="c"> Es un requisito obligatorio para que arranque GRUB</label>
+    <label class="opt"><input type="radio" name="q1-2" value="d"> Reduce el tamaño del kernel instalado</label>
+    <div class="qfeedback"></div>
+  </div>
+
+  <div class="quiz-q" data-correct="a">
+    <p class="qtext"><span class="qnum">1.3</span>En Windows, ¿cuál es una estrategia habitual para separar el sistema operativo de los datos del usuario?</p>
+    <label class="opt"><input type="radio" name="q1-3" value="a"> Instalar Windows en una partición (por ejemplo C:) y redirigir o guardar las carpetas de usuario (Documentos, Escritorio, etc.) en otra partición o disco (por ejemplo D:)</label>
+    <label class="opt"><input type="radio" name="q1-3" value="b"> Instalar Windows dos veces en la misma partición</label>
+    <label class="opt"><input type="radio" name="q1-3" value="c"> No particionar el disco; Windows separa los datos automáticamente sin configuración</label>
+    <label class="opt"><input type="radio" name="q1-3" value="d"> Guardar los datos del usuario dentro de la partición EFI</label>
+    <div class="qfeedback"></div>
+  </div>
+
+  <div class="quiz-q" data-correct="c">
+    <p class="qtext"><span class="qnum">1.4</span>¿Qué sistema de archivos se usa por defecto para la partición raíz (<code class="inline">/</code>) en la mayoría de las distribuciones Linux modernas?</p>
+    <label class="opt"><input type="radio" name="q1-4" value="a"> NTFS</label>
+    <label class="opt"><input type="radio" name="q1-4" value="b"> FAT32</label>
+    <label class="opt"><input type="radio" name="q1-4" value="c"> ext4</label>
+    <label class="opt"><input type="radio" name="q1-4" value="d"> exFAT</label>
+    <div class="qfeedback"></div>
+  </div>
+
+  <div class="quiz-q" data-correct="b">
+    <p class="qtext"><span class="qnum">1.5</span>¿Para qué sirve la partición <code class="inline">swap</code> en Linux?</p>
+    <label class="opt"><input type="radio" name="q1-5" value="a"> Para almacenar el gestor de arranque (GRUB)</label>
+    <label class="opt"><input type="radio" name="q1-5" value="b"> Para extender la memoria RAM usando espacio en disco y, opcionalmente, permitir la hibernación</label>
+    <label class="opt"><input type="radio" name="q1-5" value="c"> Para guardar copias de seguridad automáticas del sistema</label>
+    <label class="opt"><input type="radio" name="q1-5" value="d"> Es el punto de montaje donde aparecen los dispositivos USB</label>
+    <div class="qfeedback"></div>
+  </div>
+
+  <div class="quiz-q" data-correct="b">
+    <p class="qtext"><span class="qnum">1.6</span>Vas a armar un dual boot Windows + Linux y querés una partición de datos que ambos sistemas puedan leer y escribir sin problemas. ¿Qué sistema de archivos elegís para esa partición compartida?</p>
+    <label class="opt"><input type="radio" name="q1-6" value="a"> ext4, porque Windows lo reconoce sin instalar nada</label>
+    <label class="opt"><input type="radio" name="q1-6" value="b"> NTFS o exFAT, porque ambos sistemas operativos las leen y escriben de forma nativa</label>
+    <label class="opt"><input type="radio" name="q1-6" value="c"> swap, porque no pertenece a ningún sistema en particular</label>
+    <label class="opt"><input type="radio" name="q1-6" value="d"> La partición EFI, reutilizándola como almacenamiento</label>
+    <div class="qfeedback"></div>
+  </div>
+
+  <button class="corregir-btn" onclick="corregirSeccion('sec1', this)">Corregir sección 01</button>
+  <span class="section-score" id="score-sec1"></span>
+</section>
+
+<!-- =========================================================
+     SECCIÓN 2 — PRÁCTICA: DISEÑO DE ESQUEMAS DE PARTICIONES
+========================================================== -->
+<section class="block" id="sec2">
+  <div class="sec-head">
+    <div class="sec-chip" style="background:var(--s2);">02</div>
+    <div>
+      <p class="sec-kicker">Práctica</p>
+      <h2>Ejercicios: diseño de esquemas de particiones</h2>
+      <p class="sec-sub">Para cada escenario, completá la tabla con las particiones que crearías: punto de montaje, tamaño aproximado, sistema de archivos y contenido.</p>
+    </div>
+  </div>
+
+  <!-- EX 2.1 -->
+  <div class="ex">
+    <span class="extag">Ejercicio 2.1</span>
+    <p class="qtext">Vas a instalar <b>Windows 11</b> en una notebook con un SSD de <b>250 GB</b> de un solo disco (sin Linux). El objetivo es separar el sistema operativo de los datos personales, para poder reinstalar Windows en el futuro sin perder archivos. Diseñá el esquema de particiones.</p>
+
+    <table class="parttable" id="tbl-ex21">
+      <thead><tr><th style="width:26%">Partición / punto de montaje</th><th style="width:18%">Tamaño aprox.</th><th style="width:20%">Sist. de archivos</th><th>Contenido</th></tr></thead>
+      <tbody>
+        <tr><td><input placeholder="ej: EFI"></td><td><input placeholder="ej: 300 MB"></td><td><input placeholder="ej: FAT32"></td><td><input placeholder="ej: arranque UEFI"></td></tr>
+        <tr><td><input></td><td><input></td><td><input></td><td><input></td></tr>
+        <tr><td><input></td><td><input></td><td><input></td><td><input></td></tr>
+      </tbody>
+    </table>
+    <button class="addrow-btn" onclick="addRow('tbl-ex21')">+ agregar fila</button>
+
+    <button class="reveal-btn" onclick="toggleSolution('sol-ex21', this)">Ver respuesta sugerida</button>
+    <div class="solution" id="sol-ex21">
+      <span class="sol-label">Respuesta sugerida</span>
+      <table class="sol-table">
+        <tr><th>Partición</th><th>Tamaño aprox.</th><th>FS</th><th>Contenido</th></tr>
+        <tr><td>EFI System Partition</td><td>~300 MB</td><td>FAT32</td><td>Arranque UEFI</td></tr>
+        <tr><td>MSR (reservada)</td><td>16 MB</td><td>—</td><td>Reservada por Windows, uso interno</td></tr>
+        <tr><td>C: (Sistema)</td><td>~80–100 GB</td><td>NTFS</td><td>Windows, programas instalados</td></tr>
+        <tr><td>D: (Datos)</td><td>resto (~140–160 GB)</td><td>NTFS</td><td>Documentos, Escritorio, Descargas redirigidos, backups</td></tr>
+        <tr><td>Recuperación</td><td>~1 GB</td><td>NTFS</td><td>Partición de recuperación de Windows</td></tr>
+      </table>
+      <p class="expl">La idea clave: <b>C: solo tiene el sistema y los programas</b>. Las carpetas de usuario (Documentos, Escritorio, Imágenes) se redirigen por propiedades de carpeta hacia D:, así una reinstalación limpia de Windows no toca los datos.</p>
+    </div>
+  </div>
+
+  <!-- EX 2.2 -->
+  <div class="ex">
+    <span class="extag">Ejercicio 2.2</span>
+    <p class="qtext">Vas a instalar <b>Linux (Ubuntu Server)</b> en un servidor con un disco de <b>100 GB</b>, separando el sistema de los datos de configuración/aplicación y previendo que los logs puedan crecer bastante. Diseñá el esquema de particiones.</p>
+
+    <table class="parttable" id="tbl-ex22">
+      <thead><tr><th style="width:26%">Punto de montaje</th><th style="width:18%">Tamaño aprox.</th><th style="width:20%">Sist. de archivos</th><th>Contenido</th></tr></thead>
+      <tbody>
+        <tr><td><input></td><td><input></td><td><input></td><td><input></td></tr>
+        <tr><td><input></td><td><input></td><td><input></td><td><input></td></tr>
+        <tr><td><input></td><td><input></td><td><input></td><td><input></td></tr>
+      </tbody>
+    </table>
+    <button class="addrow-btn" onclick="addRow('tbl-ex22')">+ agregar fila</button>
+
+    <button class="reveal-btn" onclick="toggleSolution('sol-ex22', this)">Ver respuesta sugerida</button>
+    <div class="solution" id="sol-ex22">
+      <span class="sol-label">Respuesta sugerida</span>
+      <table class="sol-table">
+        <tr><th>Punto de montaje</th><th>Tamaño aprox.</th><th>FS</th><th>Contenido</th></tr>
+        <tr><td>/boot/efi</td><td>~300 MB</td><td>FAT32</td><td>Arranque UEFI</td></tr>
+        <tr><td>/boot</td><td>~1 GB</td><td>ext4</td><td>Kernel, initrd, GRUB</td></tr>
+        <tr><td>/ (raíz)</td><td>~20–25 GB</td><td>ext4</td><td>Sistema base y programas</td></tr>
+        <tr><td>/var</td><td>~15–20 GB</td><td>ext4</td><td>Logs y datos variables de servicios (crece con el tiempo)</td></tr>
+        <tr><td>/home</td><td>resto (~50 GB)</td><td>ext4</td><td>Datos y configuración de usuarios</td></tr>
+        <tr><td>swap</td><td>2–4 GB</td><td>swap</td><td>Memoria de intercambio</td></tr>
+      </table>
+      <p class="expl">Separar <code class="inline">/var</code> en un servidor es una buena práctica: si los logs crecen sin control, no llenan la partición raíz y dejan el sistema sin arrancar.</p>
+    </div>
+  </div>
+
+  <!-- EX 2.3 -->
+  <div class="ex">
+    <span class="extag">Ejercicio 2.3</span>
+    <p class="qtext">Vas a armar un <b>dual boot Windows 11 + Linux</b> en un SSD de <b>500 GB</b>, separando en ambos sistemas el SO de los datos de usuario, y dejando una partición compartida para intercambiar archivos entre los dos sistemas operativos.</p>
+
+    <table class="parttable" id="tbl-ex23">
+      <thead><tr><th style="width:26%">Punto de montaje</th><th style="width:18%">Tamaño aprox.</th><th style="width:20%">Sist. de archivos</th><th>Contenido</th></tr></thead>
+      <tbody>
+        <tr><td><input></td><td><input></td><td><input></td><td><input></td></tr>
+        <tr><td><input></td><td><input></td><td><input></td><td><input></td></tr>
+        <tr><td><input></td><td><input></td><td><input></td><td><input></td></tr>
+        <tr><td><input></td><td><input></td><td><input></td><td><input></td></tr>
+      </tbody>
+    </table>
+    <button class="addrow-btn" onclick="addRow('tbl-ex23')">+ agregar fila</button>
+
+    <button class="reveal-btn" onclick="toggleSolution('sol-ex23', this)">Ver respuesta sugerida</button>
+    <div class="solution" id="sol-ex23">
+      <span class="sol-label">Respuesta sugerida</span>
+      <table class="sol-table">
+        <tr><th>Punto de montaje</th><th>Tamaño aprox.</th><th>FS</th><th>Contenido</th></tr>
+        <tr><td>EFI System Partition</td><td>~300–500 MB</td><td>FAT32</td><td>Arranque UEFI, compartida por Windows y GRUB</td></tr>
+        <tr><td>C: (Windows)</td><td>~90 GB</td><td>NTFS</td><td>Windows + programas</td></tr>
+        <tr><td>D: (Datos Windows)</td><td>~90 GB</td><td>NTFS</td><td>Documentos/Escritorio redirigidos</td></tr>
+        <tr><td>/ (raíz Linux)</td><td>~40 GB</td><td>ext4</td><td>Sistema Linux + programas</td></tr>
+        <tr><td>/home (Linux)</td><td>~130 GB</td><td>ext4</td><td>Datos y configuración del usuario Linux</td></tr>
+        <tr><td>swap</td><td>8 GB</td><td>swap</td><td>Memoria de intercambio para Linux</td></tr>
+        <tr><td>Datos (compartida)</td><td>resto (~140 GB)</td><td>exFAT</td><td>Intercambio de archivos entre Windows y Linux</td></tr>
+      </table>
+      <p class="expl">Punto clave del dual boot: <b>una sola partición EFI</b> compartida por ambos sistemas, y ambos deben instalarse en el mismo modo (UEFI + GPT), nunca mezclar uno en Legacy/BIOS y otro en UEFI.</p>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================
+     SECCIÓN 3 — TEORÍA: ORGANIZACIÓN DE DIRECTORIOS EN LINUX
+========================================================== -->
+<section class="block" id="sec3">
+  <div class="sec-head">
+    <div class="sec-chip" style="background:var(--s3);">03</div>
+    <div>
+      <p class="sec-kicker">Teoría</p>
+      <h2>Organización de directorios en Linux (FHS)</h2>
+      <p class="sec-sub">Qué guarda cada carpeta del árbol estándar de directorios.</p>
+    </div>
+  </div>
+
+  <div class="quiz-q" data-correct="b">
+    <p class="qtext"><span class="qnum">3.1</span>¿Qué contiene el directorio <code class="inline">/etc</code>?</p>
+    <label class="opt"><input type="radio" name="q3-1" value="a"> Los binarios de los programas de usuario</label>
+    <label class="opt"><input type="radio" name="q3-1" value="b"> Los archivos de configuración del sistema y de los programas instalados</label>
+    <label class="opt"><input type="radio" name="q3-1" value="c"> Los dispositivos de hardware conectados</label>
+    <label class="opt"><input type="radio" name="q3-1" value="d"> Los archivos temporales de las aplicaciones</label>
+    <div class="qfeedback"></div>
+  </div>
+
+  <div class="quiz-q" data-correct="b">
+    <p class="qtext"><span class="qnum">3.2</span>¿Dónde se guardan por defecto los archivos de registro (logs) del sistema?</p>
+    <label class="opt"><input type="radio" name="q3-2" value="a"> /tmp</label>
+    <label class="opt"><input type="radio" name="q3-2" value="b"> /var/log</label>
+    <label class="opt"><input type="radio" name="q3-2" value="c"> /proc</label>
+    <label class="opt"><input type="radio" name="q3-2" value="d"> /opt</label>
+    <div class="qfeedback"></div>
+  </div>
+
+  <div class="quiz-q" data-correct="b">
+    <p class="qtext"><span class="qnum">3.3</span>¿Dónde está habitualmente el directorio personal (home) del usuario <code class="inline">root</code>?</p>
+    <label class="opt"><input type="radio" name="q3-3" value="a"> /home/root</label>
+    <label class="opt"><input type="radio" name="q3-3" value="b"> /root</label>
+    <label class="opt"><input type="radio" name="q3-3" value="c"> /usr/root</label>
+    <label class="opt"><input type="radio" name="q3-3" value="d"> /etc/root</label>
+    <div class="qfeedback"></div>
+  </div>
+
+  <div class="quiz-q" data-correct="b">
+    <p class="qtext"><span class="qnum">3.4</span>¿Qué tipo de contenido se espera encontrar en <code class="inline">/opt</code>?</p>
+    <label class="opt"><input type="radio" name="q3-4" value="a"> Archivos de configuración del kernel</label>
+    <label class="opt"><input type="radio" name="q3-4" value="b"> Software adicional u opcional, generalmente de terceros, instalado fuera del gestor de paquetes de la distribución</label>
+    <label class="opt"><input type="radio" name="q3-4" value="c"> Los dispositivos de hardware del sistema</label>
+    <label class="opt"><input type="radio" name="q3-4" value="d"> Copias de seguridad automáticas del sistema</label>
+    <div class="qfeedback"></div>
+  </div>
+
+  <button class="corregir-btn s3" onclick="corregirSeccion('sec3', this)">Corregir sección 03</button>
+  <span class="section-score" id="score-sec3"></span>
+</section>
+
+<!-- =========================================================
+     SECCIÓN 4 — PRÁCTICA: NAVEGACIÓN, RUTAS Y ARCHIVOS
+========================================================== -->
+<section class="block" id="sec4">
+  <div class="sec-head">
+    <div class="sec-chip" style="background:var(--s4); color:#08211c;">04</div>
+    <div>
+      <p class="sec-kicker">Práctica</p>
+      <h2>Navegación, rutas absolutas/relativas y gestión de archivos</h2>
+      <p class="sec-sub">Escribí el o los comandos que usarías para cada consigna. Asumí que estás logueado como tu usuario común (<code class="inline">tuusuario</code>), salvo que se indique lo contrario.</p>
+    </div>
+  </div>
+
+  <div class="quiz-q" data-correct="c">
+    <p class="qtext"><span class="qnum">4.1</span>¿Cuál de las siguientes rutas es una ruta <b>absoluta</b>?</p>
+    <label class="opt"><input type="radio" name="q4-1" value="a"> documentos/informe.txt</label>
+    <label class="opt"><input type="radio" name="q4-1" value="b"> ../fotos</label>
+    <label class="opt"><input type="radio" name="q4-1" value="c"> /var/www/html</label>
+    <label class="opt"><input type="radio" name="q4-1" value="d"> ./script.sh</label>
+    <div class="qfeedback"></div>
+  </div>
+
+  <div class="ex">
+    <span class="extag">Ejercicio 4.2</span>
+    <p class="qtext">Mostrá la ruta completa (absoluta) del directorio en el que te encontrás en este momento.</p>
+    <textarea placeholder="Escribí el comando..."></textarea>
+    <button class="reveal-btn" onclick="toggleSolution('sol-42', this)">Ver respuesta sugerida</button>
+    <div class="solution" id="sol-42">
+      <span class="sol-label">Respuesta sugerida</span>
+      <pre><span class="prompt-sym">$</span> pwd</pre>
+    </div>
+  </div>
+
+  <div class="ex">
+    <span class="extag">Ejercicio 4.3</span>
+    <p class="qtext">Listá todo el contenido del directorio actual, incluyendo archivos ocultos, en formato detallado (permisos, dueño, tamaño, fecha).</p>
+    <textarea placeholder="Escribí el comando..."></textarea>
+    <button class="reveal-btn" onclick="toggleSolution('sol-43', this)">Ver respuesta sugerida</button>
+    <div class="solution" id="sol-43">
+      <span class="sol-label">Respuesta sugerida</span>
+      <pre><span class="prompt-sym">$</span> ls -la</pre>
+      <p class="expl"><code class="inline">-l</code> = formato largo (detallado), <code class="inline">-a</code> = incluye ocultos (los que empiezan con punto).</p>
+    </div>
+  </div>
+
+  <div class="ex">
+    <span class="extag">Ejercicio 4.4</span>
+    <p class="qtext">Usando una <b>ruta relativa</b>, creá un directorio llamado <code class="inline">proyectos</code> dentro de tu carpeta personal, y dentro de él dos subdirectorios: <code class="inline">backend</code> y <code class="inline">frontend</code>.</p>
+    <textarea placeholder="Escribí el/los comando(s)..."></textarea>
+    <button class="reveal-btn" onclick="toggleSolution('sol-44', this)">Ver respuesta sugerida</button>
+    <div class="solution" id="sol-44">
+      <span class="sol-label">Respuesta sugerida</span>
+      <pre><span class="prompt-sym">$</span> cd ~
+<span class="prompt-sym">$</span> mkdir proyectos
+<span class="prompt-sym">$</span> mkdir proyectos/backend proyectos/frontend</pre>
+      <p class="expl">También sirve en un solo paso: <code class="inline">mkdir -p proyectos/{backend,frontend}</code>. La opción <code class="inline">-p</code> crea las carpetas intermedias que falten.</p>
+    </div>
+  </div>
+
+  <div class="ex">
+    <span class="extag">Ejercicio 4.5</span>
+    <p class="qtext">Usando una <b>ruta absoluta</b>, creá un archivo vacío llamado <code class="inline">notas.txt</code> dentro de <code class="inline">/home/tuusuario/proyectos</code>.</p>
+    <textarea placeholder="Escribí el comando..."></textarea>
+    <button class="reveal-btn" onclick="toggleSolution('sol-45', this)">Ver respuesta sugerida</button>
+    <div class="solution" id="sol-45">
+      <span class="sol-label">Respuesta sugerida</span>
+      <pre><span class="prompt-sym">$</span> touch /home/tuusuario/proyectos/notas.txt</pre>
+    </div>
+  </div>
+
+  <div class="ex">
+    <span class="extag">Ejercicio 4.6</span>
+    <p class="qtext">Estando parado dentro de <code class="inline">proyectos/backend</code>: subí un nivel usando <b>ruta relativa</b> y copiá el archivo <code class="inline">notas.txt</code> hacia la carpeta <code class="inline">frontend</code>, sin moverte del lugar donde termines.</p>
+    <textarea placeholder="Escribí el/los comando(s)..."></textarea>
+    <button class="reveal-btn" onclick="toggleSolution('sol-46', this)">Ver respuesta sugerida</button>
+    <div class="solution" id="sol-46">
+      <span class="sol-label">Respuesta sugerida</span>
+      <pre><span class="prompt-sym">$</span> cd ..
+<span class="prompt-sym">$</span> cp notas.txt frontend/</pre>
+      <p class="expl">También es válido sin moverte de backend: <code class="inline">cp ../notas.txt ../frontend/</code>.</p>
+    </div>
+  </div>
+
+  <div class="ex">
+    <span class="extag">Ejercicio 4.7</span>
+    <p class="qtext">Eliminá de forma recursiva el directorio <code class="inline">proyectos</code> completo, incluyendo todo su contenido.</p>
+    <textarea placeholder="Escribí el comando..."></textarea>
+    <button class="reveal-btn" onclick="toggleSolution('sol-47', this)">Ver respuesta sugerida</button>
+    <div class="solution" id="sol-47">
+      <span class="sol-label">Respuesta sugerida</span>
+      <pre><span class="prompt-sym">$</span> rm -r proyectos</pre>
+      <p class="expl"><code class="inline">-r</code> (recursivo) es obligatorio para borrar directorios con contenido. Agregar <code class="inline">-f</code> evita las confirmaciones, pero hay que usarlo con mucho cuidado: no pide confirmación ni se puede deshacer.</p>
+    </div>
+  </div>
+
+  <button class="corregir-btn s4" onclick="corregirSeccion('sec4', this)">Corregir opción múltiple de sección 04</button>
+  <span class="section-score" id="score-sec4"></span>
+</section>
+
+<!-- =========================================================
+     SECCIÓN 5 — PRÁCTICA: DIAGNÓSTICO Y ESTADO DE SERVICIOS
+========================================================== -->
+<section class="block" id="sec5">
+  <div class="sec-head">
+    <div class="sec-chip" style="background:var(--s5);">05</div>
+    <div>
+      <p class="sec-kicker">Práctica + teoría</p>
+      <h2>Comandos de diagnóstico y estado de servicios</h2>
+      <p class="sec-sub">Comandos habituales de administración: uso de recursos, procesos, servicios y logs.</p>
+    </div>
+  </div>
+
+  <div class="ex">
+    <span class="extag">Ejercicio 5.1</span>
+    <p class="qtext">Mostrá el espacio en disco usado y disponible de todas las particiones montadas, en formato legible para humanos (GB/MB en vez de bloques).</p>
+    <textarea placeholder="Escribí el comando..."></textarea>
+    <button class="reveal-btn" onclick="toggleSolution('sol-51', this)">Ver respuesta sugerida</button>
+    <div class="solution" id="sol-51">
+      <span class="sol-label">Respuesta sugerida</span>
+      <pre><span class="prompt-sym">$</span> df -h</pre>
+    </div>
+  </div>
+
+  <div class="ex">
+    <span class="extag">Ejercicio 5.2</span>
+    <p class="qtext">Mostrá el uso de memoria RAM y swap del sistema, en formato legible.</p>
+    <textarea placeholder="Escribí el comando..."></textarea>
+    <button class="reveal-btn" onclick="toggleSolution('sol-52', this)">Ver respuesta sugerida</button>
+    <div class="solution" id="sol-52">
+      <span class="sol-label">Respuesta sugerida</span>
+      <pre><span class="prompt-sym">$</span> free -h</pre>
+    </div>
+  </div>
+
+  <div class="ex">
+    <span class="extag">Ejercicio 5.3</span>
+    <p class="qtext">Mostrá en tiempo real los procesos que más CPU están consumiendo.</p>
+    <textarea placeholder="Escribí el comando..."></textarea>
+    <button class="reveal-btn" onclick="toggleSolution('sol-53', this)">Ver respuesta sugerida</button>
+    <div class="solution" id="sol-53">
+      <span class="sol-label">Respuesta sugerida</span>
+      <pre><span class="prompt-sym">$</span> top</pre>
+      <p class="expl">También sirve <code class="inline">htop</code> (más visual), si está instalado.</p>
+    </div>
+  </div>
+
+  <div class="ex">
+    <span class="extag">Ejercicio 5.4</span>
+    <p class="qtext">Consultá el estado actual (activo/inactivo, habilitado/deshabilitado) del servicio SSH.</p>
+    <textarea placeholder="Escribí el comando..."></textarea>
+    <button class="reveal-btn" onclick="toggleSolution('sol-54', this)">Ver respuesta sugerida</button>
+    <div class="solution" id="sol-54">
+      <span class="sol-label">Respuesta sugerida</span>
+      <pre><span class="prompt-sym">$</span> systemctl status ssh</pre>
+    </div>
+  </div>
+
+  <div class="ex">
+    <span class="extag">Ejercicio 5.5</span>
+    <p class="qtext">Configurá el servicio SSH para que arranque automáticamente con el sistema, y además iniciálo ahora mismo.</p>
+    <textarea placeholder="Escribí el/los comando(s)..."></textarea>
+    <button class="reveal-btn" onclick="toggleSolution('sol-55', this)">Ver respuesta sugerida</button>
+    <div class="solution" id="sol-55">
+      <span class="sol-label">Respuesta sugerida</span>
+      <pre><span class="prompt-sym">$</span> sudo systemctl enable ssh
+<span class="prompt-sym">$</span> sudo systemctl start ssh</pre>
+      <p class="expl">Se puede hacer en un solo paso con <code class="inline">sudo systemctl enable --now ssh</code>.</p>
+    </div>
+  </div>
+
+  <div class="ex">
+    <span class="extag">Ejercicio 5.6</span>
+    <p class="qtext">Consultá los últimos 50 registros (logs) del sistema relacionados con el servicio SSH.</p>
+    <textarea placeholder="Escribí el comando..."></textarea>
+    <button class="reveal-btn" onclick="toggleSolution('sol-56', this)">Ver respuesta sugerida</button>
+    <div class="solution" id="sol-56">
+      <span class="sol-label">Respuesta sugerida</span>
+      <pre><span class="prompt-sym">$</span> journalctl -u ssh -n 50</pre>
+    </div>
+  </div>
+
+  <div class="quiz-q" data-correct="b">
+    <p class="qtext"><span class="qnum">5.7</span>¿Qué diferencia hay entre <code class="inline">systemctl start</code> y <code class="inline">systemctl enable</code>?</p>
+    <label class="opt"><input type="radio" name="q5-7" value="a"> Son sinónimos, hacen exactamente lo mismo</label>
+    <label class="opt"><input type="radio" name="q5-7" value="b"><code class="inline">start</code> inicia el servicio en el momento; <code class="inline">enable</code> configura que arranque automáticamente en el próximo inicio del sistema</label>
+    <label class="opt"><input type="radio" name="q5-7" value="c"><code class="inline">enable</code> inicia el servicio y <code class="inline">start</code> lo detiene</label>
+    <label class="opt"><input type="radio" name="q5-7" value="d"><code class="inline">start</code> solo funciona con servicios de red</label>
+    <div class="qfeedback"></div>
+  </div>
+
+  <div class="quiz-q" data-correct="a">
+    <p class="qtext"><span class="qnum">5.8</span>¿Qué comando usarías para ver las direcciones IP asignadas a las interfaces de red?</p>
+    <label class="opt"><input type="radio" name="q5-8" value="a"> ip a</label>
+    <label class="opt"><input type="radio" name="q5-8" value="b"> df -h</label>
+    <label class="opt"><input type="radio" name="q5-8" value="c"> chmod 755</label>
+    <label class="opt"><input type="radio" name="q5-8" value="d"> systemctl status</label>
+    <div class="qfeedback"></div>
+  </div>
+
+  <div class="quiz-q" data-correct="b">
+    <p class="qtext"><span class="qnum">5.9</span>¿Qué información brinda el comando <code class="inline">uname -a</code>?</p>
+    <label class="opt"><input type="radio" name="q5-9" value="a"> El uso actual de memoria RAM</label>
+    <label class="opt"><input type="radio" name="q5-9" value="b"> Información del kernel y del sistema: versión, arquitectura, nombre de host, etc.</label>
+    <label class="opt"><input type="radio" name="q5-9" value="c"> La lista de paquetes instalados</label>
+    <label class="opt"><input type="radio" name="q5-9" value="d"> El estado de todos los servicios activos</label>
+    <div class="qfeedback"></div>
+  </div>
+
+  <div class="quiz-q" data-correct="b">
+    <p class="qtext"><span class="qnum">5.10</span>Al ejecutar <code class="inline">systemctl status nombre-servicio</code> y ver el estado <code class="inline">failed</code>, ¿qué significa?</p>
+    <label class="opt"><input type="radio" name="q5-10" value="a"> Que el servicio está funcionando perfectamente</label>
+    <label class="opt"><input type="radio" name="q5-10" value="b"> Que el servicio no pudo iniciarse o se detuvo por un error</label>
+    <label class="opt"><input type="radio" name="q5-10" value="c"> Que el servicio directamente no existe en el sistema</label>
+    <label class="opt"><input type="radio" name="q5-10" value="d"> Que el servicio está deshabilitado de forma permanente</label>
+    <div class="qfeedback"></div>
+  </div>
+
+  <button class="corregir-btn s5" onclick="corregirSeccion('sec5', this)">Corregir opción múltiple de sección 05</button>
+  <span class="section-score" id="score-sec5"></span>
+</section>
+
+<!-- =========================================================
+     SECCIÓN 6 — INSTALACIÓN DE PROGRAMAS EN LINUX
+========================================================== -->
+<section class="block" id="sec6">
+  <div class="sec-head">
+    <div class="sec-chip" style="background:var(--s6);">06</div>
+    <div>
+      <p class="sec-kicker">Teoría + práctica</p>
+      <h2>Formas de instalar programas en Linux</h2>
+      <p class="sec-sub">Instalación por repositorio (gestor de paquetes) vs. instalación de un paquete descargado manualmente.</p>
+    </div>
+  </div>
+
+  <div class="quiz-q" data-correct="b">
+    <p class="qtext"><span class="qnum">6.1</span>¿Cuál es la principal ventaja de instalar software desde los repositorios oficiales de la distribución, en vez de un paquete descargado manualmente?</p>
+    <label class="opt"><input type="radio" name="q6-1" value="a"> Siempre es la versión más nueva que existe en internet</label>
+    <label class="opt"><input type="radio" name="q6-1" value="b"> El gestor de paquetes resuelve automáticamente las dependencias y facilita las actualizaciones</label>
+    <label class="opt"><input type="radio" name="q6-1" value="c"> Ocupa siempre menos espacio en disco</label>
+    <label class="opt"><input type="radio" name="q6-1" value="d"> No requiere conexión a internet</label>
+    <div class="qfeedback"></div>
+  </div>
+
+  <div class="quiz-q" data-correct="b">
+    <p class="qtext"><span class="qnum">6.2</span>En una distribución basada en Debian/Ubuntu, ¿qué comando actualiza la <b>lista</b> de paquetes disponibles en los repositorios (sin instalar nada todavía)?</p>
+    <label class="opt"><input type="radio" name="q6-2" value="a"> apt upgrade</label>
+    <label class="opt"><input type="radio" name="q6-2" value="b"> apt update</label>
+    <label class="opt"><input type="radio" name="q6-2" value="c"> apt list</label>
+    <label class="opt"><input type="radio" name="q6-2" value="d"> apt install</label>
+    <div class="qfeedback"></div>
+  </div>
+
+  <div class="quiz-q" data-correct="b">
+    <p class="qtext"><span class="qnum">6.3</span>¿Qué comando de bajo nivel se usa en Debian/Ubuntu para instalar manualmente un archivo <code class="inline">.deb</code> ya descargado?</p>
+    <label class="opt"><input type="radio" name="q6-3" value="a"> apt update</label>
+    <label class="opt"><input type="radio" name="q6-3" value="b"> dpkg -i</label>
+    <label class="opt"><input type="radio" name="q6-3" value="c"> systemctl install</label>
+    <label class="opt"><input type="radio" name="q6-3" value="d"> tar -xvf</label>
+    <div class="qfeedback"></div>
+  </div>
+
+  <div class="quiz-q" data-correct="b">
+    <p class="qtext"><span class="qnum">6.4</span>Instalaste un paquete <code class="inline">.deb</code> con <code class="inline">dpkg -i</code> y este tenía dependencias no instaladas. ¿Qué pasa?</p>
+    <label class="opt"><input type="radio" name="q6-4" value="a"> dpkg las instala automáticamente desde internet sin problema</label>
+    <label class="opt"><input type="radio" name="q6-4" value="b"> La instalación queda con errores de dependencias, que se pueden resolver después con <code class="inline">apt install -f</code> (o <code class="inline">apt --fix-broken install</code>)</label>
+    <label class="opt"><input type="radio" name="q6-4" value="c"> El sistema se reinicia automáticamente para completar la instalación</label>
+    <label class="opt"><input type="radio" name="q6-4" value="d"> No pasa nada, las dependencias no son necesarias en Linux</label>
+    <div class="qfeedback"></div>
+  </div>
+
+  <div class="refbox">
+    <h4>Referencia rápida: gestores de paquetes</h4>
+    <table>
+      <tr><th>Distribución</th><th>Instalar desde repo</th><th>Instalar paquete local</th><th>Buscar</th><th>Desinstalar</th></tr>
+      <tr><td>Debian / Ubuntu</td><td><code>apt install pkg</code></td><td><code>apt install ./pkg.deb</code></td><td><code>apt search pkg</code></td><td><code>apt remove pkg</code></td></tr>
+      <tr><td>Fedora / RHEL</td><td><code>dnf install pkg</code></td><td><code>dnf install ./pkg.rpm</code></td><td><code>dnf search pkg</code></td><td><code>dnf remove pkg</code></td></tr>
+      <tr><td>Arch Linux</td><td><code>pacman -S pkg</code></td><td><code>pacman -U pkg.pkg.tar.zst</code></td><td><code>pacman -Ss pkg</code></td><td><code>pacman -R pkg</code></td></tr>
+      <tr><td>dpkg (bajo nivel, sin repos)</td><td>— no gestiona repositorios</td><td><code>dpkg -i pkg.deb</code></td><td><code>dpkg -l | grep pkg</code></td><td><code>dpkg -r pkg</code></td></tr>
+    </table>
+    <p class="expl" style="margin-top:10px; color:var(--text-dim); font-size:12.5px;"><code class="inline">dpkg</code> instala el <code class="inline">.deb</code> pero no descarga dependencias por sí solo; por eso conviene usar <code class="inline">apt install ./pkg.deb</code>, o hacer <code class="inline">dpkg -i</code> y después <code class="inline">apt install -f</code> si faltan dependencias.</p>
+  </div>
+
+  <div class="ex">
+    <span class="extag">Ejercicio 6.5</span>
+    <p class="qtext">Instalá el programa <code class="inline">htop</code> usando el gestor de paquetes de una distribución basada en Debian/Ubuntu, asegurándote primero de tener el índice de repositorios actualizado.</p>
+    <textarea placeholder="Escribí el/los comando(s)..."></textarea>
+    <button class="reveal-btn" onclick="toggleSolution('sol-65', this)">Ver respuesta sugerida</button>
+    <div class="solution" id="sol-65">
+      <span class="sol-label">Respuesta sugerida</span>
+      <pre><span class="prompt-sym">$</span> sudo apt update
+<span class="prompt-sym">$</span> sudo apt install htop</pre>
+    </div>
+  </div>
+
+  <div class="ex">
+    <span class="extag">Ejercicio 6.6</span>
+    <p class="qtext">Buscá si existe un paquete relacionado a <code class="inline">gimp</code> en los repositorios, sin instalarlo todavía.</p>
+    <textarea placeholder="Escribí el comando..."></textarea>
+    <button class="reveal-btn" onclick="toggleSolution('sol-66', this)">Ver respuesta sugerida</button>
+    <div class="solution" id="sol-66">
+      <span class="sol-label">Respuesta sugerida</span>
+      <pre><span class="prompt-sym">$</span> apt search gimp</pre>
+    </div>
+  </div>
+
+  <div class="ex">
+    <span class="extag">Ejercicio 6.7</span>
+    <p class="qtext">Un programa que necesitás no está en los repositorios: hay que bajarlo como paquete <code class="inline">.deb</code> desde el sitio oficial del desarrollador, <code class="inline">https://ejemplo.com/descargas/programa.deb</code>. Descargalo por terminal hacia <code class="inline">~/Descargas</code> y después instalalo, resolviendo dependencias si hicieran falta.</p>
+    <textarea placeholder="Escribí el/los comando(s)..."></textarea>
+    <button class="reveal-btn" onclick="toggleSolution('sol-67', this)">Ver respuesta sugerida</button>
+    <div class="solution" id="sol-67">
+      <span class="sol-label">Respuesta sugerida</span>
+      <pre><span class="prompt-sym">$</span> cd ~/Descargas
+<span class="prompt-sym">$</span> wget https://ejemplo.com/descargas/programa.deb
+<span class="prompt-sym">$</span> sudo apt install ./programa.deb</pre>
+      <p class="expl">La descarga también es válida desde el navegador (por defecto suele guardar en <code class="inline">~/Descargas</code>); acá se pide por terminal para practicar <code class="inline">wget</code>. Alternativa clásica para instalar: <code class="inline">sudo dpkg -i programa.deb</code> y, si falla por dependencias, <code class="inline">sudo apt install -f</code>.</p>
+    </div>
+  </div>
+
+  <div class="ex">
+    <span class="extag">Ejercicio 6.8</span>
+    <p class="qtext">Desinstalá el paquete <code class="inline">htop</code> instalado antes, eliminando también sus archivos de configuración.</p>
+    <textarea placeholder="Escribí el comando..."></textarea>
+    <button class="reveal-btn" onclick="toggleSolution('sol-68', this)">Ver respuesta sugerida</button>
+    <div class="solution" id="sol-68">
+      <span class="sol-label">Respuesta sugerida</span>
+      <pre><span class="prompt-sym">$</span> sudo apt purge htop</pre>
+      <p class="expl"><code class="inline">apt remove</code> desinstala el programa pero deja los archivos de configuración; <code class="inline">apt purge</code> los borra también.</p>
+    </div>
+  </div>
+
+  <button class="corregir-btn s6" onclick="corregirSeccion('sec6', this)">Corregir opción múltiple de sección 06</button>
+  <span class="section-score" id="score-sec6"></span>
+</section>
+
+<!-- =========================================================
+     SECCIÓN 7 — COMPATIBILIDAD Y VERIFICACIÓN PREVIA
+========================================================== -->
+<section class="block" id="sec7">
+  <div class="sec-head">
+    <div class="sec-chip" style="background:var(--s7);">07</div>
+    <div>
+      <p class="sec-kicker">Teoría + práctica</p>
+      <h2>Compatibilidad: qué chequear antes de instalar un paquete .deb</h2>
+      <p class="sec-sub">Antes de instalar manualmente un paquete descargado, hay que confirmar que es compatible con tu sistema. Qué mirar, y con qué comandos.</p>
+    </div>
+  </div>
+
+  <div class="quiz-q" data-correct="b">
+    <p class="qtext"><span class="qnum">7.1</span>Antes de instalar un paquete <code class="inline">.deb</code> descargado manualmente, ¿qué es fundamental verificar para asegurarte de que sea compatible con tu sistema?</p>
+    <label class="opt"><input type="radio" name="q7-1" value="a"> Que el ícono del instalador se vea bien</label>
+    <label class="opt"><input type="radio" name="q7-1" value="b"> Que la arquitectura del paquete (por ejemplo <code class="inline">amd64</code>, <code class="inline">arm64</code>) coincida con la de tu sistema, y que sea compatible con tu versión de la distribución</label>
+    <label class="opt"><input type="radio" name="q7-1" value="c"> Que el nombre del archivo termine en <code class="inline">.deb</code>; con eso alcanza</label>
+    <label class="opt"><input type="radio" name="q7-1" value="d"> Que el paquete pese menos de 100 MB</label>
+    <div class="qfeedback"></div>
+  </div>
+
+  <div class="quiz-q" data-correct="a">
+    <p class="qtext"><span class="qnum">7.2</span>¿Qué comando muestra la arquitectura de tu sistema Debian/Ubuntu, para compararla con la del paquete <code class="inline">.deb</code> que querés instalar?</p>
+    <label class="opt"><input type="radio" name="q7-2" value="a"> dpkg --print-architecture</label>
+    <label class="opt"><input type="radio" name="q7-2" value="b"> apt update</label>
+    <label class="opt"><input type="radio" name="q7-2" value="c"> systemctl status</label>
+    <label class="opt"><input type="radio" name="q7-2" value="d"> mkdir -p</label>
+    <div class="qfeedback"></div>
+  </div>
+
+  <div class="quiz-q" data-correct="a">
+    <p class="qtext"><span class="qnum">7.3</span>¿Qué comando te permite inspeccionar los metadatos de un paquete <code class="inline">.deb</code> (arquitectura, versión, dependencias) <b>sin instalarlo todavía</b>?</p>
+    <label class="opt"><input type="radio" name="q7-3" value="a"> dpkg -I archivo.deb</label>
+    <label class="opt"><input type="radio" name="q7-3" value="b"> rm archivo.deb</label>
+    <label class="opt"><input type="radio" name="q7-3" value="c"> systemctl status archivo.deb</label>
+    <label class="opt"><input type="radio" name="q7-3" value="d"> cd archivo.deb</label>
+    <div class="qfeedback"></div>
+  </div>
+
+  <div class="quiz-q" data-correct="b">
+    <p class="qtext"><span class="qnum">7.4</span>¿Dónde es más confiable buscar qué versiones de Ubuntu/Debian y qué arquitecturas soporta un programa, antes de descargar su paquete <code class="inline">.deb</code>?</p>
+    <label class="opt"><input type="radio" name="q7-4" value="a"> En un video sin fecha ni fuente clara</label>
+    <label class="opt"><input type="radio" name="q7-4" value="b"> En la página oficial de descargas o la documentación del programa</label>
+    <label class="opt"><input type="radio" name="q7-4" value="c"> Alcanza con el nombre del archivo, sin abrir nada más</label>
+    <label class="opt"><input type="radio" name="q7-4" value="d"> No hace falta buscar nada: todos los <code class="inline">.deb</code> funcionan en cualquier sistema</label>
+    <div class="qfeedback"></div>
+  </div>
+
+  <div class="quiz-q" data-correct="a">
+    <p class="qtext"><span class="qnum">7.5</span>¿Qué comando te permite ver qué versión de Ubuntu/Debian tenés instalada, para comparar con los requisitos que pide un paquete?</p>
+    <label class="opt"><input type="radio" name="q7-5" value="a"> lsb_release -a</label>
+    <label class="opt"><input type="radio" name="q7-5" value="b"> ls -la</label>
+    <label class="opt"><input type="radio" name="q7-5" value="c"> top</label>
+    <label class="opt"><input type="radio" name="q7-5" value="d"> free -h</label>
+    <div class="qfeedback"></div>
+  </div>
+
+  <div class="ex">
+    <span class="extag">Ejercicio 7.6</span>
+    <p class="qtext">Tenés un archivo <code class="inline">programa.deb</code> descargado en <code class="inline">~/Descargas</code> y querés revisar, antes de instalarlo, para qué arquitectura fue compilado y qué dependencias necesita.</p>
+    <textarea placeholder="Escribí el comando..."></textarea>
+    <button class="reveal-btn" onclick="toggleSolution('sol-76', this)">Ver respuesta sugerida</button>
+    <div class="solution" id="sol-76">
+      <span class="sol-label">Respuesta sugerida</span>
+      <pre><span class="prompt-sym">$</span> dpkg -I ~/Descargas/programa.deb</pre>
+      <p class="expl">Muestra, entre otros datos, el campo <code class="inline">Architecture</code> (ej. <code class="inline">amd64</code>) y <code class="inline">Depends</code> (las dependencias necesarias), antes de instalar nada.</p>
+    </div>
+  </div>
+
+  <div class="ex">
+    <span class="extag">Ejercicio 7.7</span>
+    <p class="qtext">Necesitás confirmar la arquitectura y la versión de tu sistema, para comparar con lo que pide el paquete que querés instalar. Escribí los comandos que usarías.</p>
+    <textarea placeholder="Escribí los comandos..."></textarea>
+    <button class="reveal-btn" onclick="toggleSolution('sol-77', this)">Ver respuesta sugerida</button>
+    <div class="solution" id="sol-77">
+      <span class="sol-label">Respuesta sugerida</span>
+      <pre><span class="prompt-sym">$</span> dpkg --print-architecture   <span style="color:#6c7d92"># ej: amd64</span>
+<span class="prompt-sym">$</span> lsb_release -a              <span style="color:#6c7d92"># versión de la distro (o cat /etc/os-release)</span></pre>
+    </div>
+  </div>
+
+  <div class="ex">
+    <span class="extag">Ejercicio 7.8</span>
+    <p class="qtext">Descargaste <code class="inline">programa.deb</code> y al inspeccionarlo ves que su arquitectura es <code class="inline">arm64</code>, pero tu <code class="inline">dpkg --print-architecture</code> devuelve <code class="inline">amd64</code>. ¿Qué significa esto y qué deberías hacer?</p>
+    <textarea placeholder="Escribí tu respuesta..."></textarea>
+    <button class="reveal-btn" onclick="toggleSolution('sol-78', this)">Ver respuesta sugerida</button>
+    <div class="solution" id="sol-78">
+      <span class="sol-label">Respuesta sugerida</span>
+      <p class="expl" style="margin-top:0;">Significa que el paquete <b>no es compatible</b> con la arquitectura de tu equipo: fue compilado para procesadores ARM de 64 bits, mientras que tu sistema es <code class="inline">amd64</code> (Intel/AMD de 64 bits). Instalarlo va a fallar o directamente <code class="inline">dpkg</code> lo va a rechazar. Lo correcto es volver a la página de descargas del programa y bajar la variante <code class="inline">amd64</code> del paquete, si existe.</p>
+    </div>
+  </div>
+
+  <button class="corregir-btn s7" onclick="corregirSeccion('sec7', this)">Corregir opción múltiple de sección 07</button>
+  <span class="section-score" id="score-sec7"></span>
+</section>
+
+<div id="finalSummary">
+  <p class="sec-kicker">Resultado final</p>
+  <h2>Corrección de todas las preguntas de opción múltiple</h2>
+  <div id="finalScoreDisplay">—</div>
+  <p id="finalScoreMsg">Tocá el botón para corregir de una sola vez todas las preguntas de opción múltiple del test (secciones 01, 03, 04, 05, 06 y 07). Los ejercicios prácticos de particionado y comandos se revisan con las respuestas sugeridas de cada sección.</p>
+  <button id="corregirTodo" onclick="corregirTodo()">Corregir todo el test</button>
+</div>
+
+</main>
+
+<script>
+  // ---------- corrección de preguntas de opción múltiple ----------
+  function corregirBloque(container){
+    const questions = container.querySelectorAll('.quiz-q');
+    let correct = 0;
+    questions.forEach(q => {
+      const correctVal = q.getAttribute('data-correct');
+      const checked = q.querySelector('input[type=radio]:checked');
+      const feedback = q.querySelector('.qfeedback');
+      q.querySelectorAll('.opt').forEach(o => o.classList.remove('correct','incorrect'));
+
+      const correctInput = q.querySelector('input[value="'+correctVal+'"]');
+      const correctLabel = correctInput ? correctInput.closest('.opt') : null;
+
+      if(!checked){
+        if(correctLabel) correctLabel.classList.add('correct');
+        feedback.textContent = 'No marcaste ninguna opción. La correcta era la resaltada en verde.';
+        feedback.className = 'qfeedback show bad';
+        return;
+      }
+      const chosenLabel = checked.closest('.opt');
+      if(checked.value === correctVal){
+        correct++;
+        chosenLabel.classList.add('correct');
+        feedback.textContent = 'Correcto.';
+        feedback.className = 'qfeedback show ok';
+      } else {
+        chosenLabel.classList.add('incorrect');
+        if(correctLabel) correctLabel.classList.add('correct');
+        feedback.textContent = 'Incorrecto. La opción correcta está resaltada en verde.';
+        feedback.className = 'qfeedback show bad';
+      }
+    });
+    return {correct, total: questions.length};
+  }
+
+  function corregirSeccion(id, btn){
+    const section = document.getElementById(id);
+    const result = corregirBloque(section);
+    const scoreSpan = document.getElementById('score-' + id);
+    if(scoreSpan) scoreSpan.textContent = 'Puntaje: ' + result.correct + '/' + result.total;
+    actualizarPuntajeGlobal();
+  }
+
+  function corregirTodo(){
+    const ids = ['sec1','sec3','sec4','sec5','sec6','sec7'];
+    let totalCorrect = 0, totalQ = 0;
+    ids.forEach(id => {
+      const section = document.getElementById(id);
+      const result = corregirBloque(section);
+      totalCorrect += result.correct; totalQ += result.total;
+      const scoreSpan = document.getElementById('score-' + id);
+      if(scoreSpan) scoreSpan.textContent = 'Puntaje: ' + result.correct + '/' + result.total;
+    });
+    document.getElementById('finalScoreDisplay').textContent = totalCorrect + ' / ' + totalQ;
+    const pct = totalQ ? Math.round((totalCorrect/totalQ)*100) : 0;
+    let msg = '';
+    if(pct >= 85) msg = 'Excelente dominio de los temas. ¡Buen trabajo!';
+    else if(pct >= 65) msg = 'Buen resultado general. Repasá las preguntas marcadas en rojo antes de seguir.';
+    else msg = 'Conviene repasar los temas de las preguntas incorrectas antes de avanzar.';
+    document.getElementById('finalScoreMsg').textContent = msg + ' No te olvides de revisar también los ejercicios prácticos con las respuestas sugeridas.';
+    actualizarPuntajeGlobal();
+  }
+
+  function actualizarPuntajeGlobal(){
+    const allQ = document.querySelectorAll('.quiz-q');
+    let total = allQ.length;
+    let correct = 0;
+    allQ.forEach(q => {
+      if(q.querySelector('.opt.correct') && q.querySelector('input[type=radio]:checked') &&
+         q.querySelector('input[type=radio]:checked').closest('.opt').classList.contains('correct')){
+        correct++;
+      }
+    });
+    document.getElementById('totalPosible').textContent = total;
+    document.querySelector('#scoreText .num').textContent = correct;
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('totalPosible').textContent = document.querySelectorAll('.quiz-q').length;
+  });
+
+  // ---------- ejercicios prácticos: revelar solución ----------
+  function toggleSolution(id, btn){
+    const sol = document.getElementById(id);
+    sol.classList.toggle('show');
+    btn.textContent = sol.classList.contains('show') ? 'Ocultar respuesta sugerida' : 'Ver respuesta sugerida';
+  }
+
+  // ---------- tabla de particiones: agregar fila ----------
+  function addRow(tableId){
+    const tbody = document.getElementById(tableId).querySelector('tbody');
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td><input></td><td><input></td><td><input></td><td><input></td>';
+    tbody.appendChild(tr);
+  }
+
+  // ---------- barra de particiones: sección activa ----------
+  const segs = document.querySelectorAll('.disk-seg');
+  const label = document.getElementById('activePartitionLabel');
+  const segNames = {
+    sec1:'PART-01 · Particionado (teoría) — ext4/NTFS/GPT',
+    sec2:'PART-02 · Particionado (práctica) — esquemas de disco',
+    sec3:'PART-03 · Directorios Linux (teoría) — FHS',
+    sec4:'PART-04 · Rutas y archivos (práctica)',
+    sec5:'PART-05 · Diagnóstico y servicios',
+    sec6:'PART-06 · Instalación de programas',
+    sec7:'PART-07 · Compatibilidad de paquetes .deb'
+  };
+  const sections = document.querySelectorAll('section.block');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if(entry.isIntersecting){
+        const id = entry.target.id;
+        segs.forEach(s => s.classList.toggle('active', s.dataset.sec === id));
+        if(segNames[id]) label.textContent = segNames[id];
+      }
+    });
+  }, {rootMargin: '-40% 0px -50% 0px', threshold: 0});
+  sections.forEach(s => observer.observe(s));
+</script>
+
 </body>
 </html>
