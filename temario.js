@@ -18,6 +18,8 @@ const TEMARIO = [
   { modulo: "IRCI", claseModulo: "mod-irci", trimestre: 3, tema: "Tema 5: Resolución de incidencias" },
   { modulo: "IRCI", claseModulo: "mod-irci", trimestre: 3, tema: "Tema 6: Repaso y caso práctico final" },
 
+  { modulo: "IRCI", claseModulo: "mod-irci", trimestre: 3, tema: "Integrador de IRCI · Sexto año · 22 bloques con respuestas", url: "irci-integrador.html" },
+
   // Mantenimiento de HW
   { modulo: "Mantenimiento de HW", claseModulo: "mod-hw", trimestre: 1, tema: "Tema 1: Componentes internos del equipo" },
   { modulo: "Mantenimiento de HW", claseModulo: "mod-hw", trimestre: 1, tema: "Tema 2: Herramientas y diagnóstico" },
@@ -67,7 +69,7 @@ function renderPorTrimestre() {
           ${items.map(i => `
             <li>
               ${chipModulo(i)}
-              <span class="titulo">${i.tema}</span>
+              <span class="titulo">${i.url ? `<a href="${i.url}">${i.tema}</a>` : i.tema}</span>
             </li>
           `).join("")}
         </ul>
@@ -88,7 +90,7 @@ function renderPorTema() {
           ${items.map(i => `
             <li>
               ${chipTrimestre(i)}
-              <span class="titulo">${i.tema}</span>
+              <span class="titulo">${i.url ? `<a href="${i.url}">${i.tema}</a>` : i.tema}</span>
             </li>
           `).join("")}
         </ul>
