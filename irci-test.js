@@ -31,7 +31,7 @@
     try {
       const saved = JSON.parse(localStorage.getItem(HISTORY_KEY) || 'null');
       if (!saved || saved.version !== 1 || typeof saved.blocks !== 'object' || saved.blocks === null) return empty;
-      for (const key of [...Array.from({length:22}, (_,i) => String(i+1)), 'mixto']) {
+      for (const key of [...Array.from({length:22}, (_,i) => String(i+1)), 'mixto', 'todos']) {
         const s = saved.blocks[key];
         if (s && Number.isInteger(s.attempts) && s.attempts > 0 && Number.isFinite(s.best) && s.best >= 0 && s.best <= 100 && Number.isFinite(s.last) && s.last >= 0 && s.last <= 100) {
           empty.blocks[key] = {attempts:s.attempts, best:s.best, last:s.last, lastCount:Number.isInteger(s.lastCount) ? s.lastCount : 0, lastAt:typeof s.lastAt === 'string' ? s.lastAt : ''};
@@ -41,6 +41,7 @@
     return empty;
   }
   function populateBlocks() {
+    const all = el('option','Quiz completo · Todas las 176 preguntas'); all.value='todos'; $('testBlock').append(all);
     for (const b of blocks) {
       const option = el('option', `Bloque ${String(b.number).padStart(2,'0')} · ${b.title}`);
       option.value = String(b.number);
@@ -50,24 +51,26 @@
     mixed.value = 'mixto'; $('testBlock').append(mixed);
     const requested = new URLSearchParams(location.search).get('bloque');
     const number = Number(requested);
-    $('testBlock').value = requested === 'mixto' ? 'mixto' : (Number.isInteger(number) && number >= 1 && number <= 22 ? String(number) : '1');
+    $('testBlock').value = requested === 'mixto' ? 'mixto' : (Number.isInteger(number) && number >= 1 && number <= 22 ? String(number) : 'todos');
     updateMode();
   }
   function updateMode() {
+    const all = $('testBlock').value === 'todos';
     const mixed = $('testBlock').value === 'mixto';
-    $('testLength').disabled = mixed;
-    $('modeInfo').textContent = mixed
+    $('testLength').disabled = mixed || all;
+    $('testLength').closest('div').hidden = all || mixed;
+    $('modeInfo').textContent = all ? 'Incluye todo el banco: 176 preguntas; cada ítem aparece una vez por intento. Se presentan de a una y podés volver a las anteriores antes de finalizar.' : mixed
       ? 'El test general elige 10 bloques distintos al azar: una pregunta por cada uno de los cinco temas, más dos conceptuales y tres de aplicación.'
       : 'El test básico incluye una pregunta de cada uno de los cinco temas y una de las tres prácticas al azar. El completo incluye los cinco temas y las tres prácticas.';
   }
   function historyView() {
     $('historyGrid').replaceChildren();
     const completed = blocks.filter(b => history.blocks[String(b.number)]).length;
-    $('historyNote').textContent = `${completed} de 22 bloques practicados individualmente. El mejor porcentaje puede corresponder a un test básico o completo. El test general se registra por separado.`;
-    for (const b of [...blocks, {number:'mixto',title:'Repaso general'}]) {
+    $('historyNote').textContent = `${completed} de 22 bloques practicados individualmente. El mejor porcentaje puede corresponder a un test básico o completo. El quiz completo y el test general se registran por separado.`;
+    for (const b of [...blocks, {number:'mixto',title:'Repaso general'}, {number:'todos',title:'Quiz completo · 176 preguntas'}]) {
       const key = String(b.number), s = history.blocks[key];
       const card = el('article', undefined, 'history-card');
-      card.append(el('h3',key === 'mixto' ? 'Test general' : `Bloque ${key.padStart(2,'0')}`));
+      card.append(el('h3',key === 'todos' ? 'Quiz completo' : key === 'mixto' ? 'Test general' : `Bloque ${key.padStart(2,'0')}`));
       card.append(el('p',b.title));
       card.append(el('p',s ? `Mejor: ${s.best}% · Último: ${s.last}% (${s.lastCount} preguntas)` : 'Todavía sin intentos finalizados.', 'muted'));
       if (s) card.append(el('p',`Intentos: ${s.attempts}`, 'muted'));
@@ -80,7 +83,9 @@
     const key = $('testBlock').value;
     const count = Number($('testLength').value);
     let selected;
-    if (key === 'mixto') {
+    if (key === 'todos') {
+      selected=blocks.flatMap(block => block.questions.map(question => ({block,question})));
+    } else if (key === 'mixto') {
       selected = shuffled(blocks).slice(0,10).map((block,i) => {
         const question = i < 5 ? block.questions[i] : shuffled(block.questions.filter(q => q.kind === (i < 8 ? 'practica' : 'teoria')))[0];
         return {block, question};
@@ -99,17 +104,17 @@
       choices:shuffled(question.options.map((text,i) => ({text, isCorrect:i === question.correct})))
     }));
     const now = new Date();
-    attempt = {key, items, startedAt:now, finishedAt:null, corrected:false, results:[], correct:0, percentage:0, id:'IRCI-'+now.getTime().toString(36)+'-'+Math.random().toString(36).slice(2,7)};
+    attempt = {key, items, cursor:0, startedAt:now, finishedAt:null, corrected:false, results:[], correct:0, percentage:0, id:'IRCI-'+now.getTime().toString(36)+'-'+Math.random().toString(36).slice(2,7)};
     $('setup').hidden = true; $('attempt').hidden = false;
     $('result').hidden = true; $('attemptActions').hidden = false;
     $('attemptError').textContent = ''; $('appStatus').textContent = '';
     $('quizForm').reset();
-    $('attemptLabel').textContent = key === 'mixto' ? 'Autoevaluación · Test general' : `Autoevaluación · Bloque ${key.padStart(2,'0')}`;
-    $('attemptTitle').textContent = key === 'mixto' ? 'Repaso general aleatorio' : items[0].block.title;
+    $('attemptLabel').textContent = key === 'todos' ? 'Autoevaluación · Todo el integrador' : key === 'mixto' ? 'Autoevaluación · Test general' : `Autoevaluación · Bloque ${key.padStart(2,'0')}`;
+    $('attemptTitle').textContent = key === 'todos' ? 'Quiz completo · 176 preguntas' : key === 'mixto' ? 'Repaso general aleatorio' : items[0].block.title;
     $('attemptDescription').textContent = `${items.length} preguntas · Una opción por pregunta · Respuestas y explicación al finalizar.`;
-    $('studyLink').href = key === 'mixto' ? 'irci-integrador.html' : `irci-integrador.html#bloque-${key.padStart(2,'0')}`;
+    $('studyLink').href = key === 'todos' || key === 'mixto' ? 'irci-integrador.html' : `irci-integrador.html#bloque-${key.padStart(2,'0')}`;
     $('answeredProgress').max = items.length;
-    renderQuestions(); updateProgress();
+    renderQuestions(); $('questionNav').hidden=false; showQuestion(0,false); updateProgress();
     $('attemptTitle').focus(); $('attempt').scrollIntoView({block:'start'});
   }
   function renderQuestions() {
@@ -141,6 +146,16 @@
       field.append(list); card.append(field); $('questions').append(card);
     });
   }
+  function showQuestion(index, focus=true) {
+    if(!attempt || attempt.corrected) return;
+    attempt.cursor=Math.max(0,Math.min(index,attempt.items.length-1));
+    document.querySelectorAll('.question-card').forEach((card,i) => {card.hidden=i!==attempt.cursor;});
+    $('questionPosition').textContent=`Pregunta ${attempt.cursor+1} de ${attempt.items.length}`;
+    $('prevQuestion').disabled=attempt.cursor===0;
+    $('nextQuestion').disabled=attempt.cursor===attempt.items.length-1;
+    $('questionJump').value=String(attempt.cursor);
+    if(focus){const first=$('question-'+attempt.cursor).querySelector('input');first.focus({preventScroll:true});$('questionNav').scrollIntoView({block:'start'});}
+  }
   function selection(index) {
     const checked=document.querySelector(`input[name="answer-${index}"]:checked`);
     return checked ? Number(checked.value) : null;
@@ -151,6 +166,9 @@
     $('answeredProgress').value=count;
     $('answeredCount').textContent=`${count} de ${attempt.items.length}`;
     $('attemptError').textContent='';
+    const fragment=document.createDocumentFragment();
+    attempt.items.forEach((item,i) => {const option=el('option',`${i+1} · Bloque ${String(item.block.number).padStart(2,'0')} · ${selection(i)===null?'Pendiente':'Respondida'}`);option.value=String(i);fragment.append(option);});
+    $('questionJump').replaceChildren(fragment);$('questionJump').value=String(attempt.cursor);
   }
   function grade(event) {
     event.preventDefault();
@@ -158,10 +176,12 @@
     const missing=attempt.items.map((_,i) => i).filter(i => selection(i)===null);
     if(missing.length) {
       $('attemptError').textContent=`Falta responder ${missing.length} pregunta${missing.length===1?'':'s'}. Completá todas antes de finalizar.`;
+      showQuestion(missing[0],false);
       const first=$('question-'+missing[0]); first.querySelector('input').focus();
       first.scrollIntoView({block:'center'}); return;
     }
     attempt.corrected=true; attempt.finishedAt=new Date();
+    $('questionNav').hidden=true;document.querySelectorAll('.question-card').forEach(c=>{c.hidden=false;});
     attempt.results=attempt.items.map((item,i) => {
       const picked=selection(i), right=item.choices.findIndex(c => c.isCorrect);
       const correct=picked===right;
@@ -214,7 +234,7 @@
       'IRCI — Resultado de autoevaluación',
       'Intento: '+attempt.id,
       'Fecha: '+attempt.finishedAt.toLocaleString('es-AR'),
-      attempt.key==='mixto'?'Test general':`Bloque ${attempt.key.padStart(2,'0')}`,
+      attempt.key==='todos'?'Quiz completo · 176 preguntas':attempt.key==='mixto'?'Test general':`Bloque ${attempt.key.padStart(2,'0')}`,
       `Resultado: ${attempt.correct}/${attempt.items.length} (${attempt.percentage}%)`,
       'Práctica local. Este archivo no acredita una evaluación supervisada.',''
     ];
@@ -253,5 +273,9 @@
     try {localStorage.removeItem(HISTORY_KEY);history={version:1,blocks:{}};historyView();$('appStatus').textContent='Se borró el historial de tests. Los apuntes del material de repaso se conservan.';}
     catch(_){$('appStatus').textContent='No se pudo borrar el historial en este navegador.';}
   });
+  $('prevQuestion').addEventListener('click',()=>showQuestion(attempt.cursor-1));
+  $('nextQuestion').addEventListener('click',()=>showQuestion(attempt.cursor+1));
+  $('questionJump').addEventListener('change',()=>showQuestion(Number($('questionJump').value)));
+  addEventListener('beforeunload',event=>{if(attempt && !attempt.corrected && attempt.items.some((_,i)=>selection(i)!==null)){event.preventDefault();event.returnValue='';}});
   populateBlocks();historyView();
 })();
